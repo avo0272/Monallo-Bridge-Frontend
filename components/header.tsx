@@ -7,7 +7,7 @@ export default function Header() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
 
   return (
-    <header className="bg-white">
+    <header className="bg-white h-26 px-4 py-4 ">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 max-w-8xl mx-auto">
           <div className="flex-shrink-0 flex items-center ml-10">
@@ -58,7 +58,7 @@ export default function Header() {
             <div className="flex items-center">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
               <select className="text-sm bg-transparent outline-none appearance-none" disabled>
-                <option>ZetaChain Mainnet</option>
+                <option>Imua Testnet</option>
                 <option>ZetaChain Testnet</option>
                 <option>Other Network</option>
               </select>
