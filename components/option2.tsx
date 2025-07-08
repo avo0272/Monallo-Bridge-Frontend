@@ -1,12 +1,18 @@
 "use client"
 import Image from "next/image";
 import { useState } from "react";
-type Option2Props = {
-    ToSymbol: string,
-    ToNetwork: string
+
+type TokenInfo = {
+  symbol: string;
+  network: string;
+  address: string;
+};
+interface Option2Props {
+  selectedToken?: TokenInfo | null;
 }
-export default function option2({ToSymbol, ToNetwork}: Option2Props) {
-    
+export default function Option2({selectedToken}: Option2Props) {
+    const ToSymbol = selectedToken?.symbol || "maoETH";
+    const ToNetwork = selectedToken?.network || "Imua Testnet";
     return(
         <div className="w-full h-25 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex justify-between">
             <div>
