@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react";
-export default function submit() {
+export default function Submit() {
     const [connected] = useState(false)
     function connect() {
         

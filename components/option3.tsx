@@ -5,7 +5,7 @@ type Option3Props = {
   onAmountChange: (value: number) => void;
   price: number;
 };
-export default function option3({amount, onAmountChange, price}: Option3Props) {
+export default function Option3({amount, onAmountChange, price}: Option3Props) {
     return(
         <div className="w-full h-25 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex justify-between">
             <div>
