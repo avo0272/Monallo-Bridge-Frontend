@@ -11,8 +11,8 @@ interface Option1Props {
   selectedToken?: TokenInfo | null;
 }
 export default function Option1({selectedToken}: Option1Props) {
-    const FromSymbol = selectedToken?.symbol || "ETH";
-    const FromNetwork = selectedToken?.network || "Ethereum Sepolia";
+    const FromSymbol = selectedToken?.symbol;
+    const FromNetwork = selectedToken?.network;
     return(
         <div className="w-full h-25 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex justify-between">
             <div>
