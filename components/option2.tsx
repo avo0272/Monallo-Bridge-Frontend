@@ -11,8 +11,8 @@ interface Option2Props {
   selectedToken?: TokenInfo | null;
 }
 export default function Option2({selectedToken}: Option2Props) {
-    const ToSymbol = selectedToken?.symbol || "maoETH";
-    const ToNetwork = selectedToken?.network || "Imua Testnet";
+    const ToSymbol = selectedToken?.symbol;
+    const ToNetwork = selectedToken?.network;
     return(
         <div className="w-full h-25 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex justify-between">
             <div>

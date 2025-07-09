@@ -1,10 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import Web3 from "web3";
+import web3Service from "../services/web3Service";
 
 export default function Header() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+  const [currentNetwork, setCurrentNetwork] = useState("Imua Testnet");
+  
+  // 格式化钱包地址，只显示前四位和后四位
+  const formatAddress = (address: string): string => {
+    if (!address) return "";
+    return `${address.substring(0, 4)}...${address.substring(address.length - 4)}`;
+  };
+
+  // 连接MetaMask钱包
+  const connectMetaMask = async () => {
+    try {
+      // 检查是否安装了MetaMask
+      if (typeof window.ethereum !== "undefined") {
+        // 请求用户授权连接钱包
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        const address = accounts[0];
+        setWalletAddress(address);
+        setIsConnected(true);
+        setShowWalletDropdown(false);
+        console.log("MetaMask连接成功:", address);
+      } else {
+        alert("请安装MetaMask钱包!");
+      }
+    } catch (error) {
+      console.error("连接MetaMask失败:", error);
+      alert("连接MetaMask失败: " + (error as Error).message);
+    }
+  };
+
+  // 连接OKX钱包
+  const connectOKXWallet = async () => {
+    try {
+      // 检查是否安装了OKX钱包
+      if (typeof window.okxwallet !== "undefined") {
+        // 请求用户授权连接钱包
+        const accounts = await window.okxwallet.request({ method: "eth_requestAccounts" });
+        const address = accounts[0];
+        setWalletAddress(address);
+        setIsConnected(true);
+        setShowWalletDropdown(false);
+        console.log("OKX钱包连接成功:", address);
+      } else {
+        alert("请安装OKX钱包!");
+      }
+    } catch (error) {
+      console.error("连接OKX钱包失败:", error);
+      alert("连接OKX钱包失败: " + (error as Error).message);
+    }
+  };
+
+  // 断开钱包连接
+  const disconnectWallet = () => {
+    setWalletAddress("");
+    setIsConnected(false);
+    setShowWalletDropdown(false);
+    console.log("钱包已断开连接");
+  };
+  
+  // 网络名称映射
+  const getNetworkDisplayName = (networkName: string): string => {
+    const networkMap: { [key: string]: string } = {
+      'Ethereum-Sepolia': 'Ethereum Sepolia',
+      'Imua-Testnet': 'Imua Testnet',
+      'ZetaChain-Testnet': 'ZetaChain Testnet',
+      'Unknown Network': 'Unknown Network'
+    };
+    return networkMap[networkName] || networkName;
+  };
+
+  // 监听钱包账户变化和网络变化
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // 定义账户变化处理函数
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length === 0) {
+          // 用户断开了连接
+          setWalletAddress("");
+          setIsConnected(false);
+        } else {
+          // 账户已更改
+          setWalletAddress(accounts[0]);
+          setIsConnected(true);
+        }
+      };
+
+      // 获取初始网络
+      const initializeNetwork = async () => {
+        try {
+          const network = await web3Service.getCurrentNetwork();
+          setCurrentNetwork(getNetworkDisplayName(network));
+        } catch (error) {
+          console.error('获取初始网络失败:', error);
+        }
+      };
+
+      initializeNetwork();
+
+      // 监听网络变化
+      web3Service.onNetworkChange((network: string) => {
+        setCurrentNetwork(getNetworkDisplayName(network));
+      });
+
+      // 添加事件监听器
+      if (window.ethereum) {
+        window.ethereum.on("accountsChanged", handleAccountsChanged);
+      }
+      
+      if (window.okxwallet) {
+        window.okxwallet.on("accountsChanged", handleAccountsChanged);
+      }
+
+      // 清理函数
+      return () => {
+        if (window.ethereum) {
+          window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+        }
+        if (window.okxwallet) {
+          window.okxwallet.removeListener("accountsChanged", handleAccountsChanged);
+        }
+      };
+    }
+    return undefined;
+  }, []);
 
   return (
     <header className="bg-white h-20 px-4 py-2 ">
@@ -38,30 +165,45 @@ export default function Header() {
                 className="bg-black text-white text-xs px-3 py-1 rounded-full"
                 onClick={() => setShowWalletDropdown((v) => !v)}
               >
-                Connect Wallet
+                {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}
               </button>
               {showWalletDropdown && (
                 <div
                   className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 rounded-xl bg-rose-100 shadow-lg p-4 z-30"
                 >
-                  <div className="flex items-center mb-2 hover:bg-rose-200 rounded px-2 py-1 cursor-pointer">
-                    <Image src="/metamask.svg" alt="MetaMask Icon" width={24} height={24} className="mr-2" />
-                    <span className="text-base text-rose-900">MetaMask</span>
-                  </div>
-                  <div className="flex items-center hover:bg-rose-200 rounded px-2 py-1 cursor-pointer">
-                    <Image src="okx_light.svg" alt="OKX Icon" width={24} height={24} className="mr-2" />
-                    <span className="text-base text-rose-900">OKXWallet</span>
-                  </div>
+                  {!isConnected ? (
+                    // 未连接钱包时显示钱包选项
+                    <>
+                      <div 
+                        className="flex items-center mb-2 hover:bg-rose-200 rounded px-2 py-1 cursor-pointer"
+                        onClick={connectMetaMask}
+                      >
+                        <Image src="/metamask.svg" alt="MetaMask Icon" width={24} height={24} className="mr-2" />
+                        <span className="text-base text-rose-900">MetaMask</span>
+                      </div>
+                      <div 
+                        className="flex items-center hover:bg-rose-200 rounded px-2 py-1 cursor-pointer"
+                        onClick={connectOKXWallet}
+                      >
+                        <Image src="/okx_light.svg" alt="OKX Icon" width={24} height={24} className="mr-2" />
+                        <span className="text-base text-rose-900">OKXWallet</span>
+                      </div>
+                    </>
+                  ) : (
+                    // 已连接钱包时显示断开连接选项
+                    <div 
+                      className="flex items-center justify-center hover:bg-rose-200 rounded px-2 py-1 cursor-pointer"
+                      onClick={disconnectWallet}
+                    >
+                      <span className="text-base text-rose-900">断开连接</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
             <div className="flex items-center">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-              <select className="text-sm bg-transparent outline-none appearance-none" disabled>
-                <option>Imua Testnet</option>
-                <option>ZetaChain Testnet</option>
-                <option>Other Network</option>
-              </select>
+              <span className="text-sm">{currentNetwork}</span>
             </div>
           </div>
         </div>

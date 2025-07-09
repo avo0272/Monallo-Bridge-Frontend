@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react";
+import web3Service from "../services/web3Service";
 
 type Token = {
   symbol: string;
@@ -7,39 +8,50 @@ type Token = {
   address: string;
 };
 
-type NetworkKey = 'Ethereum' | 'Imua' | 'ZetaChain';
+type NetworkKey = 'Ethereum-Sepolia' | 'Imua-Testnet' | 'ZetaChain-Testnet';
 interface Option1SelectProps {
   onTokenSelect: (token: Token) => void
   showSelect: (v: boolean) => void
+  toNetwork?: string // 添加来自Option2的网络信息
 }
 
 
-export default function Option1Select({ onTokenSelect, showSelect }: Option1SelectProps) {
-  const networks = [
-    { name: "ETH", icon: "/ethereum.png", network: "Ethereum" },
-    { name: "Imua", icon: "/imua.png", network: "Imua" },
-    { name: "ZETA", icon: "/zeta.png", network: "ZetaChain" },
+export default function Option1Select({ onTokenSelect, showSelect, toNetwork }: Option1SelectProps) {
+  // 所有可用的网络
+  const allNetworks = [
+    { name: "ETH", icon: "/ethereum.png", network: "Ethereum-Sepolia" },
+    { name: "Imua", icon: "/imua.png", network: "Imua-Testnet" },
+    { name: "ZETA", icon: "/zeta.png", network: "ZetaChain-Testnet" },
   ];
+  
+  // 过滤掉与toNetwork相同的网络
+  const networks = allNetworks.filter(network => {
+    // 如果toNetwork是undefined或null，显示所有网络
+    if (!toNetwork) return true;
+    // 否则过滤掉与toNetwork相同的网络
+    return network.network !== toNetwork;
+  });
 
   const networkInfo = {
-    Ethereum: [
-      { symbol: "ETH", network: "Ethereum", address: "" },
-      { symbol: "USDC", network: "Ethereum", address: "0x...." },
-      { symbol: "ADA", network: "Ethereum", address: "" },
+    "Ethereum-Sepolia": [
+      { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
+      { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x...." },
+      { symbol: "ADA", network: "Ethereum-Sepolia", address: "" },
     ],
-    Imua: [
-      { symbol: "maoETH", network: "Imua", address: "" },
-      { symbol: "maoUSDC", network: "Imua", address: "" },
-      { symbol: "maoADA", network: "Imua", address: "" }
+    "Imua-Testnet": [
+      { symbol: "maoETH", network: "Imua-Testnet", address: "" },
+      { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
+      { symbol: "maoADA", network: "Imua-Testnet", address: "" }
     ],
-    ZetaChain: [
-      { symbol: "maoETH", network: "ZetaChain", address: "" },
-      { symbol: "maoUSDC", network: "ZetaChain", address: "" },
-      { symbol: "maoADA", network: "ZetaChain", address: "" }
+    "ZetaChain-Testnet": [
+      { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
+      { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
+      { symbol: "maoADA", network: "ZetaChain-Testnet", address: "" }
     ],
   };
 
-  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>("Ethereum");
+  // 默认激活的网络应与body.tsx中的初始值一致
+  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>("Ethereum-Sepolia");
   const [searchTerm, setSearchTerm] = useState("");
 
   // 过滤代币：匹配 symbol 或 address
@@ -50,25 +62,43 @@ export default function Option1Select({ onTokenSelect, showSelect }: Option1Sele
 
   const handleTokenClick = (token: Token) => {
     console.log(token);
-    
+
     onTokenSelect(token);
     showSelect(false);
-};
+  };
 
   return (
     <div className="w-full h-115 p-5 bg-[#000000] rounded-xl flex flex-col">
       <p className="text-white">Select a network</p>
       <div className="flex gap-7 py-4">
-        {networks.map((network, index) => (
-          <div
-            key={index}
-            onClick={() => setActiveNetwork(network.network as NetworkKey)}
-            className="flex flex-col items-center cursor-pointer"
-          >
-            <img src={network.icon} alt={network.name} className="w-11 h-11 object-cover rounded-full" />
-            <span className="text-white text-sm mt-2">{network.name}</span>
-          </div>
-        ))}
+        {allNetworks.map((network, index) => {
+          // 检查是否是与toNetwork相同的网络
+          const isDisabled = toNetwork && (network.network === toNetwork);
+          return (
+            <div
+              key={index}
+              onClick={async () => {
+                if (isDisabled) {
+                  return;
+                }
+                try {
+                  // 切换网络
+                  await web3Service.switchNetwork(network.network);
+                  setActiveNetwork(network.network as NetworkKey);
+                  console.log(`成功切换到网络: ${network.network}`);
+                } catch (error) {
+                  console.error('切换网络失败:', error);
+                  // 即使切换失败，也更新UI状态，让用户知道选择了哪个网络
+                  setActiveNetwork(network.network as NetworkKey);
+                }
+              }}
+              className={`flex flex-col items-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <img src={network.icon} alt={network.name} className="w-11 h-11 object-cover rounded-full" />
+              <span className="text-white text-sm mt-2">{network.name}</span>
+            </div>
+          );
+        })}
         <div className="flex flex-col items-center cursor-pointer">
           <img src="other.png" alt="other networks" className="w-11 h-11 object-cover " />
           <span className="text-white text-sm mt-2">Other</span>
@@ -88,7 +118,9 @@ export default function Option1Select({ onTokenSelect, showSelect }: Option1Sele
         </div>
         <div className="flex flex-col gap-2 flex-1 overflow-y-auto text-white max-h-44 ">
           {/* 代币列表 */}
-          {filteredTokens.length > 0 ? (
+          {activeNetwork && toNetwork && (activeNetwork === toNetwork) ? (
+            <div className="text-red-500 py-4">Cannot select the same network as target! Please select a different network.</div>
+          ) : filteredTokens.length > 0 ? (
             <div className="flex-1 min-h-0">
               <div className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {filteredTokens.map((token, idx) => (
