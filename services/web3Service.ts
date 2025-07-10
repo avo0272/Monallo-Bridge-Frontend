@@ -161,7 +161,7 @@ class Web3Service {
       });
 
       this.currentNetwork = networkName;
-      console.log(`成功切换到网络: ${networkName}`);
+      // console.log(`成功切换到网络: ${networkName}`);
       return true;
     } catch (error: any) {
       // 如果网络不存在，尝试添加网络
