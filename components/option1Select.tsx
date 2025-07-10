@@ -13,10 +13,13 @@ interface Option1SelectProps {
   onTokenSelect: (token: Token) => void
   showSelect: (v: boolean) => void
   toNetwork?: string // 添加来自Option2的网络信息
+  selectedToken?: Token // 添加当前选择的代币信息
+  toToken?: Token // 添加目标代币信息，用于过滤相同类型的代币
+  walletConnected: boolean // 添加钱包连接状态
 }
 
 
-export default function Option1Select({ onTokenSelect, showSelect, toNetwork }: Option1SelectProps) {
+export default function Option1Select({ onTokenSelect, showSelect, toNetwork, selectedToken, toToken, walletConnected }: Option1SelectProps) {
   // 所有可用的网络
   const allNetworks = [
     { name: "ETH", icon: "/ethereum.png", network: "Ethereum-Sepolia" },
@@ -35,34 +38,44 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork }: 
   const networkInfo = {
     "Ethereum-Sepolia": [
       { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
-      { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x...." },
-      { symbol: "ADA", network: "Ethereum-Sepolia", address: "" },
+      { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
+      { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
     ],
     "Imua-Testnet": [
       { symbol: "maoETH", network: "Imua-Testnet", address: "" },
       { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoADA", network: "Imua-Testnet", address: "" }
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "" }
     ],
     "ZetaChain-Testnet": [
       { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoADA", network: "ZetaChain-Testnet", address: "" }
+      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" }
     ],
   };
 
-  // 默认激活的网络应与body.tsx中的初始值一致
-  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>("Ethereum-Sepolia");
+  // 使用当前选择的网络作为默认激活的网络
+  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>(
+    selectedToken?.network as NetworkKey || "Ethereum-Sepolia"
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   // 过滤代币：匹配 symbol 或 address
-  const filteredTokens = networkInfo[activeNetwork].filter(token =>
-    token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    token.address.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTokens = networkInfo[activeNetwork].filter(token => {
+    // 匹配搜索词
+    return token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      token.address.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const handleTokenClick = (token: Token) => {
     console.log(token);
-
+    
+    // 检查钱包是否已连接
+    if (!walletConnected) {
+      alert("Please connect your wallet first.");
+      showSelect(false);
+      return;
+    }
+    
     onTokenSelect(token);
     showSelect(false);
   };

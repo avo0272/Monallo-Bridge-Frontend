@@ -12,10 +12,13 @@ interface Option2SelectProps {
   onTokenSelect: (token: Token) => void
   showSelect: (v: boolean) => void
   fromNetwork?: string // 添加来自Option1的网络信息
+  selectedToken?: Token // 添加当前选择的代币信息
+  fromToken?: Token // 添加源代币信息，用于过滤相同类型的代币
+  walletConnected: boolean // 添加钱包连接状态
 }
 
 
-export default function Option2Select({ onTokenSelect, showSelect, fromNetwork }: Option2SelectProps) {
+export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, selectedToken, fromToken, walletConnected }: Option2SelectProps) {
   // 过滤掉与fromNetwork相同的网络
   const allNetworks = [
     { name: "ETH", icon: "/ethereum.png", network: "Ethereum-Sepolia" },
@@ -34,23 +37,25 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork }
   const networkInfo = {
     "Ethereum-Sepolia": [
       { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
-      { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x...." },
-      { symbol: "ADA", network: "Ethereum-Sepolia", address: "" },
+      { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
+      { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
     ],
     "Imua-Testnet": [
       { symbol: "maoETH", network: "Imua-Testnet", address: "" },
       { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoADA", network: "Imua-Testnet", address: "" }
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "" }
     ],
     "ZetaChain-Testnet": [
       { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoADA", network: "ZetaChain-Testnet", address: "" }
+      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" }
     ],
   };
 
-  // 默认激活的网络应与body.tsx中的初始值一致
-  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>("Imua-Testnet");
+  // 使用当前选择的网络作为默认激活的网络
+  const [activeNetwork, setActiveNetwork] = useState<NetworkKey>(
+    selectedToken?.network as NetworkKey || "Imua-Testnet"
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   // 检查当前选择的网络是否与fromNetwork相同
@@ -59,19 +64,25 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork }
   // 过滤代币：匹配 symbol 或 address，并且排除来自与fromNetwork相同网络的代币
   const filteredTokens = isNetworkDisabled 
     ? [] // 如果网络被禁用，返回空数组
-    : networkInfo[activeNetwork].filter(token =>
-        token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.address.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    : networkInfo[activeNetwork].filter(token => {
+        // 匹配搜索词
+        return token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          token.address.toLowerCase().includes(searchTerm.toLowerCase());
+      });
 
   const handleTokenClick = (token: Token) => {
     console.log(token);
     
-
+    // 检查钱包是否已连接
+    if (!walletConnected) {
+      alert("Please connect your wallet first.");
+      showSelect(false);
+      return;
+    }
     
     onTokenSelect(token);
     showSelect(false);
-};
+  };
 
   return (
     <div className="w-full h-115 p-5 bg-[#000000] rounded-xl flex flex-col">
@@ -87,6 +98,7 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork }
                 if (isDisabled) {
                   return;
                 }
+                // 只更新UI状态，不切换网络
                 setActiveNetwork(network.network as NetworkKey);
               }}
               className={`flex flex-col items-center ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}

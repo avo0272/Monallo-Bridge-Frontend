@@ -11,6 +11,17 @@ export default function Header() {
   const [isConnected, setIsConnected] = useState(false);
   const [currentNetwork, setCurrentNetwork] = useState("Imua Testnet");
   
+  // 初始化时从localStorage加载钱包地址
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedAddress = localStorage.getItem("walletAddress");
+      if (savedAddress) {
+        setWalletAddress(savedAddress);
+        setIsConnected(true);
+      }
+    }
+  }, []);
+  
   // 格式化钱包地址，只显示前四位和后四位
   const formatAddress = (address: string): string => {
     if (!address) return "";
@@ -28,6 +39,13 @@ export default function Header() {
         setWalletAddress(address);
         setIsConnected(true);
         setShowWalletDropdown(false);
+        // 保存钱包地址到localStorage
+        localStorage.setItem("walletAddress", address);
+        // 触发自定义事件，通知其他组件钱包状态已变化
+        if (typeof document !== "undefined") {
+          const event = new CustomEvent("walletChanged");
+          document.dispatchEvent(event);
+        }
         console.log("MetaMask连接成功:", address);
       } else {
         alert("请安装MetaMask钱包!");
@@ -49,6 +67,13 @@ export default function Header() {
         setWalletAddress(address);
         setIsConnected(true);
         setShowWalletDropdown(false);
+        // 保存钱包地址到localStorage
+        localStorage.setItem("walletAddress", address);
+        // 触发自定义事件，通知其他组件钱包状态已变化
+        if (typeof document !== "undefined") {
+          const event = new CustomEvent("walletChanged");
+          document.dispatchEvent(event);
+        }
         console.log("OKX钱包连接成功:", address);
       } else {
         alert("请安装OKX钱包!");
@@ -64,6 +89,13 @@ export default function Header() {
     setWalletAddress("");
     setIsConnected(false);
     setShowWalletDropdown(false);
+    // 从localStorage中移除钱包地址
+    localStorage.removeItem("walletAddress");
+    // 触发自定义事件，通知其他组件钱包状态已变化
+    if (typeof document !== "undefined") {
+      const event = new CustomEvent("walletChanged");
+      document.dispatchEvent(event);
+    }
     console.log("钱包已断开连接");
   };
   
@@ -87,10 +119,20 @@ export default function Header() {
           // 用户断开了连接
           setWalletAddress("");
           setIsConnected(false);
+          // 从localStorage中移除钱包地址
+          localStorage.removeItem("walletAddress");
         } else {
           // 账户已更改
           setWalletAddress(accounts[0]);
           setIsConnected(true);
+          // 更新localStorage中的钱包地址
+          localStorage.setItem("walletAddress", accounts[0]);
+        }
+        
+        // 触发自定义事件，通知其他组件钱包状态已变化
+        if (typeof document !== "undefined") {
+          const event = new CustomEvent("walletChanged");
+          document.dispatchEvent(event);
         }
       };
 
@@ -119,6 +161,13 @@ export default function Header() {
       if (window.okxwallet) {
         window.okxwallet.on("accountsChanged", handleAccountsChanged);
       }
+      
+      // 监听自定义事件，用于从其他组件触发钱包下拉框显示
+      const handleShowWalletDropdown = () => {
+        setShowWalletDropdown(true);
+      };
+      
+      document.addEventListener("showWalletDropdown", handleShowWalletDropdown);
 
       // 清理函数
       return () => {
@@ -128,6 +177,7 @@ export default function Header() {
         if (window.okxwallet) {
           window.okxwallet.removeListener("accountsChanged", handleAccountsChanged);
         }
+        document.removeEventListener("showWalletDropdown", handleShowWalletDropdown);
       };
     }
     return undefined;
