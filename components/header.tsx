@@ -48,11 +48,11 @@ export default function Header() {
         }
         console.log("MetaMask连接成功:", address);
       } else {
-        alert("请安装MetaMask钱包!");
+        alert("Please install MetaMask!");
       }
     } catch (error) {
-      console.error("连接MetaMask失败:", error);
-      alert("连接MetaMask失败: " + (error as Error).message);
+      console.error("Failed to connect MetaMask:", error);
+      alert("Failed to connect MetaMask: " + (error as Error).message);
     }
   };
 
@@ -76,11 +76,11 @@ export default function Header() {
         }
         console.log("OKX钱包连接成功:", address);
       } else {
-        alert("请安装OKX钱包!");
+        alert("Please install the OKX Wallet extension!");
       }
     } catch (error) {
-      console.error("连接OKX钱包失败:", error);
-      alert("连接OKX钱包失败: " + (error as Error).message);
+      console.error("Failed to connect OKX Wallet:", error);
+      alert("Failed to connect OKX Wallet: " + (error as Error).message);
     }
   };
 
@@ -245,7 +245,7 @@ export default function Header() {
                       className="flex items-center justify-center hover:bg-rose-200 rounded px-2 py-1 cursor-pointer"
                       onClick={disconnectWallet}
                     >
-                      <span className="text-base text-rose-900">断开连接</span>
+                      <span className="text-base text-rose-900">Disconnect</span>
                     </div>
                   )}
                 </div>
