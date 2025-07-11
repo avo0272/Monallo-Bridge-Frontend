@@ -210,9 +210,10 @@ export default function Header() {
             </a>
             <div
               className="relative"
+              onMouseLeave={() => setShowWalletDropdown(false)}
             >
               <button 
-                className="bg-black text-white text-xs px-3 py-1 rounded-full"
+                className="bg-black text-white text-xs px-3 py-1 rounded-full cursor-pointer"
                 onClick={() => setShowWalletDropdown((v) => !v)}
               >
                 {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}

@@ -8,6 +8,7 @@ import Submit from "./submit"
 import Image from "next/image";
 import Option1Select from "./option1Select";
 import Option2Select from "./option2Select";
+import ReceiverAddress from "./receiverAddress";
 import { useState, useEffect } from "react"
 import web3Service from "../services/web3Service"
 import priceService from "../services/priceService"
@@ -17,6 +18,7 @@ export default function Body() {
     const [amount, setAmount] = useState('') // 金额，改为字符串类型
     const [price, setPrice] = useState(0) // 价格
     const [isLoadingPrice, setIsLoadingPrice] = useState(false) // 价格加载状态
+    const [receiverAddress, setReceiverAddress] = useState('') // 接收者地址
     // const [ToSymbol] = useState("maoETH")
     // const [ToNetwork] = useState("Imua Testnet")
     const [bridgeName] = useState("via Monallo Bridge")
@@ -40,7 +42,9 @@ export default function Body() {
         "USDC": ["USDC", "maoUSDC"],
         "maoUSDC": ["USDC", "maoUSDC"],
         "EURC": ["EURC", "maoEURC"],
-        "maoEURC": ["EURC", "maoEURC"]
+        "maoEURC": ["EURC", "maoEURC"],
+        "IMUA": ["IMUA", "maoIMUA"],
+        "ZETA": ["ZETA", "maoZETA"],
     };
     
     // 检查两个代币是否属于同一类型
@@ -377,6 +381,15 @@ export default function Body() {
                         {tokenTypeError}
                     </div>
                 )}
+                
+                {/* 添加接收者地址组件 */}
+                <div className="mb-3">
+                    <ReceiverAddress 
+                        receiverAddress={receiverAddress}
+                        onAddressChange={setReceiverAddress}
+                    />
+                </div>
+                
                 {amount && parseFloat(String(amount)) > 0 && (
                     <>
                         <div className="flex">
@@ -396,6 +409,7 @@ export default function Body() {
                                 document.dispatchEvent(event);
                             }
                         }}
+                        receiverAddress={receiverAddress}
                     />
                 </div>
             </div>
