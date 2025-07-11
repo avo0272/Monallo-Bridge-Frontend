@@ -56,33 +56,33 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
     
     // 处理WebSocket消息
     const handleWebSocketMessage = (data: MintMessage) => {
-        console.log('收到WebSocket消息:', data);
+        console.log('Received WebSocket message:', data);
         if (data && typeof data === 'object') {
             // 根据消息类型处理
             if (data.type === 'MINT_SUCCESS') {
                 setMintStatus({
                     success: true,
-                    message: '铸币成功！',
+                    message: 'Minting successful!',
                     targetToTxHash: data.data?.targetToTxHash
                 });
             } else if (data.type === 'MINT_FAILURE') {
                 setMintStatus({
                     success: false,
-                    message: data.message || '铸币失败',
+                    message: data.message || 'Minting failed',
                     targetToTxHash: data.data?.targetToTxHash
                 });
             } else {
                 // 处理其他类型的消息
                 setMintStatus({
                     success: data.success,
-                    message: data.message || '收到铸币状态更新',
+                    message: data.message || 'Received minting status update',
                     targetToTxHash: data.data?.targetToTxHash
                 });
             }
             
-            console.log('处理后的铸币状态:', {
+            console.log('Processed minting status:', {
                 success: data.type === 'MINT_SUCCESS',
-                message: data.type === 'MINT_SUCCESS' ? '铸币成功！' : (data.message || '收到铸币状态更新'),
+                message: data.type === 'MINT_SUCCESS' ? 'Minting successful!' : (data.message || 'Received minting status update'),
                 targetToTxHash: data.data?.targetToTxHash
             });
             
@@ -135,7 +135,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
     // 处理Bridge按钮点击 - 显示确认对话框
     async function handleBridgeClick() {
         if (!window.ethereum) {
-            alert("请安装MetaMask或其他兼容的钱包!");
+            alert("Please install MetaMask or other compatible wallet!");
             return;
         }
         
@@ -163,8 +163,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             setShowConfirmDialog(true);
             
         } catch (error) {
-            console.error("准备锁币操作失败:", error);
-            alert("准备锁币操作失败: " + (error instanceof Error ? error.message : String(error)));
+            console.error("Prepare lock operation failed:", error);
+            alert("Prepare lock operation failed: " + (error instanceof Error ? error.message : String(error)));
         }
     }
     
@@ -182,15 +182,15 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
         try {
             const { currentAddress, receiver, value, currentNetwork } = transactionDetails;
             
-            console.log("锁币操作开始:");
-            console.log("- 当前网络:", currentNetwork);
-            console.log("- 发送者地址:", currentAddress);
-            console.log("- 接收者地址:", receiver);
-            console.log("- 金额:", value, "ETH");
+            console.log("Lock operation started:");
+            console.log("- Current network:", currentNetwork);
+            console.log("- Sender address:", currentAddress);
+            console.log("- Receiver address:", receiver);
+            console.log("- Amount:", value, "ETH");
             
             // 显示锁币中状态
             setMintStatus({
-                message: "锁币交易处理中..."
+                message: "Processing lock transaction..."
             });
             setShowMintStatus(true);
             
@@ -204,7 +204,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             
             const txHash = result.transactionHash;
             setTxHash(txHash);
-            console.log("交易成功:", txHash);
+            console.log("Transaction successful:", txHash);
             
             // 提取fee信息，如果有的话
             let fee = null;
@@ -221,13 +221,13 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                 fee: fee ? fee.toString() : null
             };
             
-            // 打印所有数据
-            console.log("发送到后端的数据:", transactionData);
+            // Print all data
+            console.log("Data to be sent to backend:", transactionData);
             
             // 更新状态为锁币成功，等待铸币
             setMintStatus({
                 success: true,
-                message: "锁币成功，正在等待铸币确认...",
+                message: "Lock successful, waiting for minting confirmation...",
                 targetToTxHash: txHash
             });
             
@@ -238,12 +238,12 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             // WebSocket消息处理函数会在收到铸币确认后设置isProcessing为false
             
         } catch (error) {
-            console.error("锁币失败:", error);
+            console.error("Lock failed:", error);
             
             // 显示错误状态
             setMintStatus({
                 success: false,
-                message: "锁币失败: " + (error instanceof Error ? error.message : String(error))
+                message: "Lock failed: " + (error instanceof Error ? error.message : String(error))
             });
             setShowMintStatus(true);
             setIsProcessing(false);
@@ -266,8 +266,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             }
             
             const responseData = response.data;
-            setBackendResponse("数据已成功发送到后端，等待铸币确认...");
-            console.log("后端响应:", responseData);
+            setBackendResponse("Data successfully sent to backend, waiting for minting confirmation...");
+            console.log("Backend response:", responseData);
             
             // 设置为处理中状态，等待WebSocket消息
             setIsProcessing(true);
@@ -275,7 +275,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             // 显示临时状态消息
             setMintStatus({
                 success: undefined,
-                message: "等待铸币确认，请稍候..."
+                message: "Waiting for minting confirmation, please wait..."
             });
             setShowMintStatus(true);
             
@@ -283,13 +283,13 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             // WebSocket消息处理在handleWebSocketMessage函数中
             
         } catch (error) {
-            console.error("发送数据到后端失败:", error);
-            setBackendResponse("发送数据到后端失败: " + (error instanceof Error ? error.message : String(error)));
+            console.error("Failed to send data to backend:", error);
+            setBackendResponse("Failed to send data to backend: " + (error instanceof Error ? error.message : String(error)));
             
             // 显示错误状态
             setMintStatus({
                 success: false,
-                message: "发送数据到后端失败，但锁币操作已完成",
+                message: "Failed to send data to backend, but lock operation is complete",
                 targetToTxHash: data.sourceFromTxHash
             });
             setShowMintStatus(true);
@@ -309,7 +309,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                             onClick={handleBridgeClick}
                             disabled={isProcessing}
                         >
-                            {isProcessing ? "处理中..." : "Bridge"}
+                            {isProcessing ? "Processing..." : "Bridge"}
                         </button>
                     </div>
                 ) : (
@@ -338,7 +338,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                                 </p>
                                 {mintStatus.targetToTxHash && (
                                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                        <p className="text-sm font-medium text-gray-700">交易哈希:</p>
+                                        <p className="text-sm font-medium text-gray-700">Transaction Hash:</p>
                                         <p className="text-sm font-mono break-all mt-1">{mintStatus.targetToTxHash}</p>
                                     </div>
                                 )}
@@ -355,7 +355,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                                 onClick={() => setShowMintStatus(false)}
                                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
                             >
-                                关闭
+                                Close
                             </button>
                         </div>
                     </div>
@@ -368,25 +368,25 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                     {/* 毛玻璃背景 */}
                     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={cancelBridgeTransaction}></div>
                     <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl z-50">
-                        <h2 className="text-xl font-bold mb-4">确认锁币交易</h2>
+                        <h2 className="text-xl font-bold mb-4">Confirm Lock Transaction</h2>
                         <div className="mb-4">
-                            <p className="mb-2"><span className="font-semibold">网络:</span> {transactionDetails.currentNetwork}</p>
-                            <p className="mb-2"><span className="font-semibold">发送地址:</span> {transactionDetails.currentAddress}</p>
-                            <p className="mb-2"><span className="font-semibold">接收地址:</span> {transactionDetails.receiver}</p>
-                            <p className="mb-2"><span className="font-semibold">金额:</span> {transactionDetails.value} ETH</p>
+                            <p className="mb-2"><span className="font-semibold">Network:</span> {transactionDetails.currentNetwork}</p>
+                            <p className="mb-2"><span className="font-semibold">From Address:</span> {transactionDetails.currentAddress}</p>
+                            <p className="mb-2"><span className="font-semibold">To Address:</span> {transactionDetails.receiver}</p>
+                            <p className="mb-2"><span className="font-semibold">Amount:</span> {transactionDetails.value} ETH</p>
                         </div>
                         <div className="flex justify-end space-x-3">
                             <button 
                                 className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors"
                                 onClick={cancelBridgeTransaction}
                             >
-                                取消
+                                Cancel
                             </button>
                             <button 
                                 className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors"
                                 onClick={confirmBridgeTransaction}
                             >
-                                确认
+                                Confirm
                             </button>
                         </div>
                     </div>

@@ -104,10 +104,10 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
                   // 切换网络
                   await web3Service.switchNetwork(network.network);
                   setActiveNetwork(network.network as NetworkKey);
-                  console.log(`成功切换到网络: ${network.network}`);
+                  console.log(`Successfully switched to network: ${network.network}`);
                 } catch (error) {
-                  console.error('切换网络失败:', error);
-                  // 即使切换失败，也更新UI状态，让用户知道选择了哪个网络
+                  console.error('Failed to switch network:', error);
+                  // Even if switching fails, update UI state to let user know which network was selected
                   setActiveNetwork(network.network as NetworkKey);
                 }
               }}

@@ -5,7 +5,7 @@ export function useWebSocket(onMessage: (data: any) => void) {
     const ws = new WebSocket('ws://localhost:8888');
 
     ws.onopen = () => {
-      console.log('✅ WebSocket 已连接');
+      console.log('✅ WebSocket connected');
     };
 
     ws.onmessage = (event) => {
@@ -13,12 +13,12 @@ export function useWebSocket(onMessage: (data: any) => void) {
         const msg = JSON.parse(event.data);
         onMessage(msg);
       } catch (err) {
-        console.error('消息解析失败:', err);
+        console.error('Failed to parse message:', err);
       }
     };
 
     ws.onclose = () => {
-      console.log('WebSocket 已断开');
+      console.log('WebSocket disconnected');
     };
 
     return () => {
