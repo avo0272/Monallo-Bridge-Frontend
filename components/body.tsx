@@ -410,6 +410,7 @@ export default function Body() {
                             }
                         }}
                         receiverAddress={receiverAddress}
+                        amount={amount} // 传递金额参数
                     />
                 </div>
             </div>

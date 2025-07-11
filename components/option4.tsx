@@ -16,7 +16,7 @@ export default function Option4({amount, ToSymbol, price, bridgeName, ToNetwork,
                 <span>Fastest</span>
             </div>
             <div>
-                <span className="text-[#827c7c]">${price.toFixed(4)} {bridgeName}</span>
+                <span className="text-[#827c7c]">${(price * 0.992).toFixed(4)} {bridgeName}</span>
             </div>
             <div className="flex justify-between w-full">
                 <p className="text-[#827c7c]">Time to {ToNetwork}</p>
