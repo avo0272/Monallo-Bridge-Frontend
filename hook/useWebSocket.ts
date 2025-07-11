@@ -1,11 +1,18 @@
 import { useEffect } from 'react';
 
-export function useWebSocket(onMessage: (data: any) => void) {
+export function useWebSocket(onMessage: (data: any) => void, walletAddress?: string) {
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8888');
+    // Only create WebSocket connection when wallet address exists
+    if (!walletAddress) {
+      console.log('WebSocket connection not established: wallet not connected');
+      return;
+    }
+    
+    // Create WebSocket connection and add wallet address as query parameter
+    const ws = new WebSocket(`wss://uatbridge.monallo.ai/ws?address=${walletAddress}`);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket connected');
+      console.log('✅ WebSocket connected with wallet address:', walletAddress);
     };
 
     ws.onmessage = (event) => {
@@ -24,5 +31,5 @@ export function useWebSocket(onMessage: (data: any) => void) {
     return () => {
       ws.close();
     };
-  }, [onMessage]);
+  }, [onMessage, walletAddress]); // Add walletAddress as dependency
 }
