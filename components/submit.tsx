@@ -94,8 +94,18 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
         }
     };
     
-    // 使用WebSocket钩子
-    useWebSocket(handleWebSocketMessage);
+    // Use WebSocket hook with wallet address
+    const [walletAddress, setWalletAddress] = useState<string>("");
+    
+    // Update wallet address when connection status changes
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedAddress = localStorage.getItem("walletAddress") || "";
+            setWalletAddress(savedAddress);
+        }
+    }, [connected]);
+    
+    useWebSocket(handleWebSocketMessage, walletAddress);
     
     // 从localStorage检查钱包连接状态
     useEffect(() => {
@@ -103,10 +113,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             const savedAddress = localStorage.getItem("walletAddress");
             setConnected(!!savedAddress);
             
-            // 监听localStorage变化
+            // Listen for localStorage changes
             const handleStorageChange = () => {
-                const currentAddress = localStorage.getItem("walletAddress");
+                const currentAddress = localStorage.getItem("walletAddress") || "";
                 setConnected(!!currentAddress);
+                setWalletAddress(currentAddress);
             };
             
             // 创建自定义事件监听器，用于跨组件通信
@@ -240,7 +251,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
         } catch (error) {
             console.error("Lock failed:", error);
             
-            // 显示错误状态
+            // Show error status
             setMintStatus({
                 success: false,
                 message: "Lock failed: " + (error instanceof Error ? error.message : String(error))
@@ -255,11 +266,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
         setShowConfirmDialog(false);
     }
     
-    // 发送数据到后端
+    // Send data to backend
     async function sendDataToBackend(data: TransactionData) {
         setIsSendingToBackend(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/lockInfo', data);
+            // Include wallet address in the request for user identification
+            const requestData = {
+                ...data,
+                walletAddress: walletAddress // Add wallet address for identification
+            };
+            const response = await axios.post('https://uatbridge.monallo.ai/lockinfo/api/lockInfo', requestData);
             console.log(response);
             if (response.status !== 200) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -269,18 +285,18 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
             setBackendResponse("Data successfully sent to backend, waiting for minting confirmation...");
             console.log("Backend response:", responseData);
             
-            // 设置为处理中状态，等待WebSocket消息
+            // Set to processing state, waiting for WebSocket message
             setIsProcessing(true);
             
-            // 显示临时状态消息
+            // Show temporary status message
             setMintStatus({
                 success: undefined,
                 message: "Waiting for minting confirmation, please wait..."
             });
             setShowMintStatus(true);
             
-            // 不再显示alert，等待WebSocket消息更新状态
-            // WebSocket消息处理在handleWebSocketMessage函数中
+            // No longer show alert, waiting for WebSocket message to update status
+            // WebSocket message handling is in handleWebSocketMessage function
             
         } catch (error) {
             console.error("Failed to send data to backend:", error);
