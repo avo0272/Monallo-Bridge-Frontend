@@ -12,7 +12,7 @@ export default function Option4({amount, ToSymbol, price, bridgeName, ToNetwork,
     return(
         <div className="w-full h-30 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex flex-col justify-between">
             <div className="flex justify-between w-full">
-                <p className="text-xl font-bold">{amount} {ToSymbol}</p>
+                <p className="text-xl font-bold">{amount * 0.992} {ToSymbol}</p>
                 <span>Fastest</span>
             </div>
             <div>
