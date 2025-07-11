@@ -219,9 +219,12 @@ export default function Header() {
                 {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}
               </button>
               {showWalletDropdown && (
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 rounded-xl bg-rose-100 shadow-lg p-4 z-30"
-                >
+                <>
+                  {/* 添加一个看不见的连接区域，防止鼠标移动时触发 mouseleave */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-40 h-2"></div>
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-40 rounded-xl bg-rose-100 shadow-lg p-4 z-30"
+                  >
                   {!isConnected ? (
                     // 未连接钱包时显示钱包选项
                     <>
@@ -250,6 +253,7 @@ export default function Header() {
                     </div>
                   )}
                 </div>
+                </>
               )}
             </div>
             <div className="flex items-center">
