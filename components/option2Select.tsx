@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react";
+import { net } from "web3";
 
 type Token = {
   symbol: string;
@@ -39,13 +40,19 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
       { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
       { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
       { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
+      { symbol: "maoIMUA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
+      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"}
     ],
     "Imua-Testnet": [
+      { symbol: "IMUA", network: "Imua-Testnet", address: "" },
       { symbol: "maoETH", network: "Imua-Testnet", address: "" },
       { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoEURC", network: "Imua-Testnet", address: "" }
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "" },
+      { symbol: "maoZETA", network: "Imua-Testnet", address: ""}
     ],
     "ZetaChain-Testnet": [
+      { symbol: "ZETA", network: "ZetaChain-Testnet", address: "" },
+      { symbol: "maoIMUA", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" }

@@ -40,13 +40,19 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
       { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
       { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
       { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
+      { symbol: "maoIMUA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
+      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"}
     ],
     "Imua-Testnet": [
+      { symbol: "IMUA", network: "Imua-Testnet", address: "" },
       { symbol: "maoETH", network: "Imua-Testnet", address: "" },
       { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoEURC", network: "Imua-Testnet", address: "" }
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "" },
+      { symbol: "maoZETA", network: "Imua-Testnet", address: ""}
     ],
     "ZetaChain-Testnet": [
+      { symbol: "ZETA", network: "ZetaChain-Testnet", address: "" },
+      { symbol: "maoIMUA", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" }
@@ -98,10 +104,10 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
                   // 切换网络
                   await web3Service.switchNetwork(network.network);
                   setActiveNetwork(network.network as NetworkKey);
-                  console.log(`成功切换到网络: ${network.network}`);
+                  console.log(`Successfully switched to network: ${network.network}`);
                 } catch (error) {
-                  console.error('切换网络失败:', error);
-                  // 即使切换失败，也更新UI状态，让用户知道选择了哪个网络
+                  console.error('Failed to switch network:', error);
+                  // Even if switching fails, update UI state to let user know which network was selected
                   setActiveNetwork(network.network as NetworkKey);
                 }
               }}
