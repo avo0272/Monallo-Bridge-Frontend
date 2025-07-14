@@ -193,7 +193,7 @@ export default function Header() {
             </a>
           </div>
           <div className="flex items-center space-x-4 mr-10">
-            <a href="#" className="flex items-center text-sm ">
+            <a href="https://scan.allora-testnet.monallo.ai" className="flex items-center text-sm ">
               <Image src="/eye.png" alt="Validator Icon" width={15} height={15} className="mr-1" />
               MonalloScan
             </a>

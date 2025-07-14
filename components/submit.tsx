@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Web3 from "web3";
 import contractService from "../services/contractService";
 import web3Service from "../services/web3Service";
@@ -54,8 +54,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
     } | null>(null);
     const [showMintStatus, setShowMintStatus] = useState(false);
     
-    // 处理WebSocket消息
-    const handleWebSocketMessage = (data: MintMessage) => {
+    // 处理WebSocket消息 - 使用useCallback缓存函数，避免不必要的重新创建
+    const handleWebSocketMessage = useCallback((data: MintMessage) => {
         console.log('Received WebSocket message:', data);
         if (data && typeof data === 'object') {
             // 根据消息类型处理
@@ -92,7 +92,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                 setIsProcessing(false);
             }
         }
-    };
+    }, [isProcessing, setMintStatus, setShowMintStatus, setIsProcessing]);
     
     // Use WebSocket hook with wallet address
     const [walletAddress, setWalletAddress] = useState<string>("");
@@ -276,6 +276,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
                 walletAddress: walletAddress // Add wallet address for identification
             };
             const response = await axios.post('https://uatbridge.monallo.ai/lockinfo/api/lockInfo', requestData);
+            // const response = await axios.post('http://192.168.31.176:5000/api/lockInfo', requestData);
             console.log(response);
             if (response.status !== 200) {
                 throw new Error(`HTTP error! status: ${response.status}`);
