@@ -46,7 +46,7 @@ const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
       decimals: 18,
     },
     rpcUrls: ['https://zetachain-athens-evm.blockpi.network/v1/rpc/public'],
-    blockExplorerUrls: ['https://zetachain-athens-3.blockscout.com'],
+    blockExplorerUrls: ['https://zetachain-testnet.blockscout.com/'],
   },
 };
 

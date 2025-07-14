@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react";
 import web3Service from "../services/web3Service";
+import { getExplorerUrl } from "../utils/explorerUtils";
 
 type Token = {
   symbol: string;
@@ -154,8 +155,16 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
                       {token.address && (
                         <>
                           &nbsp;·
-                          <a href="#" className="text-blue-500">{token.address}</a>
-                          <img src={'/share.png'} className="w-2.5 h-2.5 self-center" />
+                          <a 
+                            href={getExplorerUrl(token.network, token.address)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center"
+                          >
+                            <span className="text-blue-500 truncate max-w-full inline-block align-bottom">{token.address}</span>
+                            <img src={'/share.png'} className="w-2.5 h-2.5 ml-1" alt="View on explorer" title="View on explorer" />
+                          </a>
                         </>
                       )}
                     </p>

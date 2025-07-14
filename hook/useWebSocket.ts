@@ -37,7 +37,7 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
     
     // Create WebSocket connection and add wallet address as query parameter
     console.log('Creating new WebSocket connection for address:', walletAddress);
-    const ws = new WebSocket(`wss://uatbridge.monallo.ai/ws?address=${walletAddress}`);
+    const ws = new WebSocket(`wss://uatbridge.monallo.ai/ws/?address=${walletAddress}`);
     // const ws = new WebSocket(`ws://192.168.31.176:8888?address=${walletAddress}`);
     wsRef.current = ws;
     connectedAddressRef.current = walletAddress;
