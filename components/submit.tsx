@@ -105,7 +105,35 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
         }
     }, [connected]);
     
-    useWebSocket(handleWebSocketMessage, walletAddress);
+    // 使用更新后的useWebSocket钩子，获取连接状态和重连方法
+    const { isConnected, reconnect } = useWebSocket(handleWebSocketMessage, walletAddress);
+    
+    // 在用户交互时触发WebSocket重连
+    const triggerReconnect = useCallback(() => {
+        if (!isConnected && walletAddress) {
+            console.log('User interaction detected, attempting to reconnect WebSocket');
+            reconnect();
+        }
+    }, [isConnected, walletAddress, reconnect]);
+    
+    // 监听用户交互事件
+    useEffect(() => {
+        const userInteractionEvents = ['mousedown', 'keydown', 'touchstart'];
+        
+        const handleUserInteraction = () => {
+            triggerReconnect();
+        };
+        
+        userInteractionEvents.forEach(event => {
+            document.addEventListener(event, handleUserInteraction);
+        });
+        
+        return () => {
+            userInteractionEvents.forEach(event => {
+                document.removeEventListener(event, handleUserInteraction);
+            });
+        };
+    }, [triggerReconnect]);
     
     // 从localStorage检查钱包连接状态
     useEffect(() => {
@@ -133,6 +161,9 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
     
     // 处理连接钱包按钮点击
     function handleConnectClick() {
+        // 尝试重新连接WebSocket
+        triggerReconnect();
+        
         // 如果提供了onConnectWallet回调，则调用它
         if (onConnectWallet) {
             onConnectWallet();
@@ -145,6 +176,9 @@ export default function Submit({ onConnectWallet, receiverAddress, amount }: Sub
     
     // 处理Bridge按钮点击 - 显示确认对话框
     async function handleBridgeClick() {
+        // 尝试重新连接WebSocket
+        triggerReconnect();
+        
         if (!window.ethereum) {
             alert("Please install MetaMask or other compatible wallet!");
             return;

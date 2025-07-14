@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react";
-import { net } from "web3";
+import { getExplorerUrl } from "../utils/explorerUtils";
 
 type Token = {
   symbol: string;
@@ -132,13 +132,13 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
           />
           <p className="text-gray-400 py-2">Tokens on {activeNetwork}</p>
         </div>
-        <div className="flex flex-col gap-2 flex-1 overflow-y-auto text-white max-h-44 ">
+        <div className="flex flex-col gap-2 flex-1 overflow-y-auto text-white max-h-44">
           {/* 代币列表 */}
           {isNetworkDisabled ? (
             <p className="text-red-500">Cannot select the same network as source! Please select another network.</p>
           ) : filteredTokens.length > 0 ? (
             <div className="flex-1 min-h-0">
-              <div className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="h-full overflow-y-auto custom-scrollbar">
                 {filteredTokens.map((token, idx) => (
                   <div
                     key={idx}
@@ -151,8 +151,16 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
                       {token.address && (
                         <>
                           &nbsp;·
-                          <a href="#" className="text-blue-500">{token.address}</a>
-                          <img src={'/share.png'} className="w-2.5 h-2.5 self-center" />
+                          <a 
+                            href={getExplorerUrl(token.network, token.address)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center"
+                          >
+                            <span className="text-blue-500 truncate max-w-full inline-block align-bottom">{token.address}</span>
+                            <img src={'/share.png'} className="w-2.5 h-2.5 ml-1" alt="View on explorer" title="View on explorer" />
+                          </a>
                         </>
                       )}
                     </p>
