@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react";
+import { NumberMul, formatNumber } from "../utils/numberUtils";
 type Option4Props = {
   amount: number;
   ToSymbol: string;
@@ -12,11 +13,11 @@ export default function Option4({amount, ToSymbol, price, bridgeName, ToNetwork,
     return(
         <div className="w-full h-30 p-5 bg-[#EEEEEE] shadow-xl/20 rounded-xl flex flex-col justify-between">
             <div className="flex justify-between w-full">
-                <p className="text-xl font-bold">{amount * 0.992} {ToSymbol}</p>
+                <p className="text-xl font-bold">{NumberMul(amount, 0.992)} {ToSymbol}</p>
                 <span>Fastest</span>
             </div>
             <div>
-                <span className="text-[#827c7c]">${(price * 0.992).toFixed(4)} {bridgeName}</span>
+                <span className="text-[#827c7c]">${formatNumber(NumberMul(price, 0.992), 4)} {bridgeName}</span>
             </div>
             <div className="flex justify-between w-full">
                 <p className="text-[#827c7c]">Time to {ToNetwork}</p>
