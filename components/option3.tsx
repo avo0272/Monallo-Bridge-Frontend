@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react";
+import { formatNumber } from "../utils/numberUtils";
 type Option3Props = {
   amount: string | number; // 修改为string或number类型，以支持小数点输入
   onAmountChange: (value: string | number) => void;
@@ -58,7 +59,7 @@ export default function Option3({amount, onAmountChange, price, balance, walletC
                         placeholder="0"
                     />
                     <p className="text-[#827c7c] text-lg font-extralight">
-                        {isLoadingPrice ? 'Loading price...' : `$${price.toFixed(2)}`}
+                        {isLoadingPrice ? 'Loading price...' : `$${formatNumber(price, 2)}`}
                     </p>
                 </div>
                 <div className="flex items-center">

@@ -194,18 +194,18 @@ export default function Header() {
           </div>
           <div className="flex items-center space-x-4 mr-10">
             <a href="#" className="flex items-center text-sm ">
-              <Image src="/Validator.png" alt="Validator Icon" width={15} height={15} className="mr-1" />
+              <Image src="/eye.png" alt="Validator Icon" width={15} height={15} className="mr-1" />
               MonalloScan
             </a>
             <a
               href="#"
               className="flex items-center text-sm relative"
             >
-              <Image src="/Blockchains.png" alt="Blockchain Icon" width={15} height={15} className="mr-1" />
+              <Image src="/bridge.png" alt="Blockchain Icon" width={15} height={15} className="mr-1" />
               Bridge
             </a>
             <a href="#" className="flex items-center text-sm ">
-              <Image src="/Faucet.png" alt="Faucet Icon" width={15} height={15} className="mr-1" />
+              <Image src="/file.png" alt="Faucet Icon" width={15} height={15} className="mr-1" />
               Histroy
             </a>
             <div

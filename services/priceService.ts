@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { NumberMul } from '../utils/numberUtils';
 
 // 定义代币价格接口
 interface TokenPrice {
@@ -114,7 +115,7 @@ class PriceService {
     if (!amount || isNaN(amount) || amount <= 0) return 0;
     
     const price = await this.getTokenPrice(symbol);
-    return price * amount;
+    return NumberMul(price, amount);
   }
 }
 

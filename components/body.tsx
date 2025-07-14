@@ -22,7 +22,7 @@ export default function Body() {
     // const [ToSymbol] = useState("maoETH")
     // const [ToNetwork] = useState("Imua Testnet")
     const [bridgeName] = useState("via Monallo Bridge")
-    const [time] = useState("5")
+    const [time] = useState("20")
     const [showSelect1, setShowSelect1] = useState(false) // 控制 Select1 显示的状态
     const [selectedToken1, setSelectedToken1] = useState<{ symbol: string; network: string; address: string }>({ symbol: "ETH", network: "Ethereum-Sepolia", address: "" })
     const [showSelect2, setShowSelect2] = useState(false) // 控制 Select2 显示的状态
