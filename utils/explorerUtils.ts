@@ -11,7 +11,7 @@ export function getExplorerUrl(network: string, address: string): string {
     case "Ethereum-Sepolia":
       return `https://sepolia.etherscan.io/address/${address}`;
     case "Imua-Testnet":
-      return `https://https://exoscan.org/address/${address}`;
+      return `https://exoscan.org/address/${address}`;
     case "ZetaChain-Testnet":
       return `https://zetachain-testnet.blockscout.com/address/${address}`;
     default:
