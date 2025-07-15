@@ -204,9 +204,9 @@ export default function Header() {
               <Image src="/bridge.png" alt="Blockchain Icon" width={15} height={15} className="mr-1" />
               Bridge
             </a>
-            <a href="#" className="flex items-center text-sm ">
-              <Image src="/file.png" alt="Faucet Icon" width={15} height={15} className="mr-1" />
-              Histroy
+            <a href="/history" className="flex items-center text-sm ">
+              <Image src="/file.png" alt="History Icon" width={15} height={15} className="mr-1" />
+              History
             </a>
             <div
               className="relative"
