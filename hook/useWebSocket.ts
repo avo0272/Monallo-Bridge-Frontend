@@ -7,6 +7,10 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
   const [isConnected, setIsConnected] = useState(false);
   const lastActivityRef = useRef<number>(Date.now());
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 心跳间隔时间（毫秒）- 默认每30秒发送一次心跳
+  const HEARTBEAT_INTERVAL = 90000;
   
   // 更新最后活动时间
   const updateLastActivity = () => {
@@ -15,6 +19,36 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
     // 如果WebSocket已断开但有钱包地址，则尝试重新连接
     if (!isConnected && walletAddress) {
       connectWebSocket();
+    }
+  };
+  
+  // 发送心跳消息以保持连接活跃
+  const sendHeartbeat = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('Sending heartbeat to keep WebSocket connection alive');
+      // 发送一个简单的心跳消息
+      wsRef.current.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
+      // 更新最后活动时间
+      updateLastActivity();
+    }
+  };
+  
+  // 启动心跳定时器
+  const startHeartbeat = () => {
+    // 清除现有的心跳定时器
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+    }
+    
+    // 设置新的心跳定时器
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+  };
+  
+  // 停止心跳定时器
+  const stopHeartbeat = () => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
     }
   };
   
@@ -50,6 +84,8 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
     ws.onopen = () => {
       console.log('✅ WebSocket connected with wallet address:', walletAddress);
       setIsConnected(true);
+      // 连接成功后启动心跳
+      startHeartbeat();
     };
 
     ws.onmessage = (event) => {
@@ -67,11 +103,15 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
       if (connectedAddressRef.current === walletAddress) {
         connectedAddressRef.current = undefined;
       }
+      // 连接关闭时停止心跳
+      stopHeartbeat();
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       setIsConnected(false);
+      // 连接出错时停止心跳
+      stopHeartbeat();
     };
   };
   
@@ -108,6 +148,9 @@ export function useWebSocket(onMessage: (data: any) => void, walletAddress?: str
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      
+      // 清理心跳定时器
+      stopHeartbeat();
     };
   }, [walletAddress]); // 只依赖于钱包地址
   

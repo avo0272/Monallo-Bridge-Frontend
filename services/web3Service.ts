@@ -14,7 +14,7 @@ interface NetworkConfig {
 }
 
 // 支持的网络配置
-const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
+export const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
   'Ethereum-Sepolia': {
     chainId: '0xaa36a7', // 11155111
     chainName: 'Sepolia test network',
