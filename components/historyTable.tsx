@@ -77,7 +77,12 @@ export default function HistoryTable() {
         mintedToken: record.mintedToken || "",
       }));
       
-      setRecords(processedRecords);
+      // 按时间戳倒序排列（最新的在前面）
+      const sortedRecords = processedRecords.sort((a: BridgeRecord, b: BridgeRecord) => {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+      
+      setRecords(sortedRecords);
     } catch (err) {
       console.error("获取跨链记录失败:", err);
       setError("获取数据失败，请稍后重试");
