@@ -142,6 +142,21 @@ class Web3Service {
     }
   }
 
+  // 获取当前链ID
+  async getCurrentChainId(): Promise<string> {
+    if (!this.web3) {
+      throw new Error('Web3 未初始化');
+    }
+
+    try {
+      const chainId = await this.web3.eth.getChainId();
+      return chainId.toString();
+    } catch (error) {
+      console.error('获取当前链ID失败:', error);
+      throw error;
+    }
+  }
+
   // 切换网络
   async switchNetwork(networkName: string): Promise<boolean> {
     if (!this.web3 || !window.ethereum) {
