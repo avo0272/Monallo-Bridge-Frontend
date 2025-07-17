@@ -68,6 +68,7 @@ export default function Body() {
                 
                 // 获取余额
                 const balance = await web3Service.getTokenBalance(tokenInfo.address, walletAddress);
+                
                 setToken1Balance(balance);
             }
             // 不处理Token2的余额
@@ -304,6 +305,8 @@ export default function Body() {
                             const tempBalance = token1Balance;
                             setToken1Balance(token2Balance);
                             setToken2Balance(tempBalance);
+                            // 重置输入金额为0
+                            setAmount('');
                         }}
                     />
                 </div>

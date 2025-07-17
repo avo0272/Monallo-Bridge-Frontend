@@ -36,8 +36,16 @@ export default function Option3({amount, onAmountChange, price, balance, walletC
         const regex = /^\d*\.?\d*$/;
         
         if (regex.test(value)) {
-            // 直接传递字符串值，保留小数点
-            onAmountChange(value);
+            // 检查输入值是否超过余额
+            if (balance && parseFloat(value) > parseFloat(balance)) {
+                setWalletError("Amount cannot exceed your balance");
+                // 将输入值限制为余额
+                onAmountChange(balance);
+            } else {
+                setWalletError(""); // 清除错误提示
+                // 直接传递字符串值，保留小数点
+                onAmountChange(value);
+            }
         }
     };
     
