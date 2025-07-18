@@ -6,7 +6,7 @@ import { getExplorerUrl } from "../utils/explorerUtils";
 import Image from "next/image";
 import { CircularProgress, Box } from "@mui/material";
 
-// 定义跨链记录的数据类型
+// Define cross-chain record data type
 interface BridgeRecord {
   _id: string;
   fromAddress: string;
@@ -22,7 +22,7 @@ interface BridgeRecord {
   targetToTxHash?: string;
   lockedToken?: string;
   mintedToken?: string;
-  // API返回的原始字段
+  // Original fields returned by API
   sourceFromAddress?: string;
   targetToAddress?: string;
   sourceFromAmount?: string;
@@ -36,7 +36,7 @@ interface BridgeRecord {
   targetToTokenName?: string;
 }
 
-// 状态映射
+// Status mapping
 const getStatusDisplay = (status: string) => {
   const statusMap: { [key: string]: { text: string; color: string } } = {
     pending: { text: "pending", color: "text-yellow-600 bg-yellow-100" },
@@ -46,13 +46,13 @@ const getStatusDisplay = (status: string) => {
   return statusMap[status] || { text: status, color: "text-gray-600 bg-gray-100" };
 };
 
-// 格式化地址显示
+// Format address display
 const formatAddress = (address: string): string => {
   if (!address) return "";
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 };
 
-// 格式化时间戳
+// Format timestamp
 const formatTimestamp = (timestamp: string): string => {
   return new Date(timestamp).toLocaleString("zh-CN", {
     year: "numeric",
@@ -70,35 +70,35 @@ export default function HistoryTable() {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(10);
 
-  // 获取跨链记录数据
+  // Get cross-chain record data
   const fetchBridgeRecords = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // 这里需要替换为实际的后端API地址
-      // const response = await axios.get("https://uatbridge.monallo.ai/lockinfo/api/crossLockInfo");
-      const response = await axios.get("http://192.168.31.176:5000/api/allCrossRecords");
+      // This needs to be replaced with the actual backend API address
+      const response = await axios.get("https://uatbridge.monallo.ai/lockinfo/api/allCrossRecords");
+      // const response = await axios.get("http://192.168.31.176:5000/api/allCrossRecords");
       console.log(response.data);
       
-      // 处理数据，映射API返回的字段到组件使用的字段
+      // Process data, map API returned fields to component fields
       const processedRecords = response.data.map((record: any) => {
-        // 移除字段中的引号
+        // Remove quotes from fields
         const cleanString = (str: string | undefined) => {
           if (!str) return "";
-          return str.replace(/['"`]/g, "");
+          return str.replace(/['"\`]/g, "");
         };
         
         return {
           ...record,
-          // 映射字段
+          // Map fields
           fromAddress: record.sourceFromAddress || "",
           toAddress: record.targetToAddress || "",
           amount: record.sourceFromAmount || "",
           fee: record.sourceFromHandingFee || "",
           status: record.crossBridgeStatus || record.sourceFromTxStatus || "pending",
           timestamp: record.createdAt || record.updatedAt || new Date().toISOString(),
-          // 清理字段中的引号
+          // Clean quotes from fields
           sourceChain: cleanString(record.sourceChain),
           targetChain: cleanString(record.targetChain),
           targetToTxHash: record.targetToTxHash || "",
@@ -107,21 +107,21 @@ export default function HistoryTable() {
         };
       });
       
-      // 按时间戳倒序排列（最新的在前面）
+      // Sort by timestamp in descending order (newest first)
       const sortedRecords = processedRecords.sort((a: BridgeRecord, b: BridgeRecord) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
       
       setRecords(sortedRecords);
     } catch (err) {
-      console.error("获取跨链记录失败:", err);
-      setError("获取数据失败，请稍后重试");
+      console.error("Failed to get cross-chain records:", err);
+      setError("Failed to get data, please try again later");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 手动刷新
+  // Manual refresh
   const handleManualRefresh = () => {
     setCountdown(10);
     fetchBridgeRecords();
@@ -129,12 +129,12 @@ export default function HistoryTable() {
 
 
 
-  // 初始化数据获取
+  // Initialize data fetching
   useEffect(() => {
     fetchBridgeRecords();
   }, [fetchBridgeRecords]);
 
-  // 自动刷新倒计时
+  // Auto refresh countdown
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -159,12 +159,12 @@ export default function HistoryTable() {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* 控制面板 */}
+      {/* Control panel */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1"></div>
         <div className="flex items-center space-x-4">
           <div className="relative flex items-center">
-            {/* 刷新按钮 */}
+            {/* Refresh button */}
             <button
               onClick={handleManualRefresh}
               disabled={loading}
@@ -179,7 +179,7 @@ export default function HistoryTable() {
               />
             </button>
 
-            {/* Material UI 圆形进度条 */}
+            {/* Material UI circular progress */}
             <Box sx={{ position: 'relative', display: 'inline-flex' }}>
               <CircularProgress 
                 variant="determinate" 
@@ -199,7 +199,7 @@ export default function HistoryTable() {
         </div>
       )}
 
-      {/* 数据表格 */}
+      {/* Data table */}
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto">
           <thead>
@@ -257,7 +257,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={30} height={30} />
+                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
                       </button>
                     </div>
                   </td>
@@ -277,7 +277,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={30} height={30} />
+                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
                       </button>
                     </div>
                   </td>
@@ -297,7 +297,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={30} height={30} />
+                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
                       </button>
                     </div>
                   </td>
@@ -318,7 +318,7 @@ export default function HistoryTable() {
                           }}
                           className="text-blue-500 hover:text-blue-700"
                         >
-                          <Image src="/share.png" alt="查看" width={30} height={30} />
+                          <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
                         </button>
                       </div>
                     ) : (

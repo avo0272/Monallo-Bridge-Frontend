@@ -259,20 +259,12 @@ export function getTokenDisplayName(symbol: string): string {
 /**
  * 格式化交易哈希显示
  * @param hash 完整的交易哈希
- * @param startLength 开始显示的字符数
- * @param endLength 结尾显示的字符数
- * @returns 格式化后的哈希
+ * @returns 完整的交易哈希
  */
-export function formatTxHash(
-  hash: string,
-  startLength: number = 6,
-  endLength: number = 4
-): string {
-  if (!hash || hash.length <= startLength + endLength) {
-    return hash;
-  }
-  
-  return `${hash.slice(0, startLength)}...${hash.slice(-endLength)}`;
+export function formatTxHash(hash: string): string {
+  // 根据需求，返回完整的交易哈希而不是缩写版本
+  return hash || '';
+
 }
 
 /**
