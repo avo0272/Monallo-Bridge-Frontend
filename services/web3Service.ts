@@ -76,7 +76,7 @@ const ERC20_ABI = [
 ];
 
 class Web3Service {
-  private web3: Web3 | null = null;
+  private _web3: Web3 | null = null;
   private currentNetwork: string = '';
   private networkChangeCallbacks: ((network: string) => void)[] = [];
 
@@ -84,11 +84,16 @@ class Web3Service {
     this.initializeWeb3();
     this.setupEventListeners();
   }
+  
+  // 获取web3实例的公共访问器
+  get web3(): Web3 | null {
+    return this._web3;
+  }
 
   // 初始化Web3
   private initializeWeb3() {
     if (typeof window !== 'undefined' && window.ethereum) {
-      this.web3 = new Web3(window.ethereum);
+      this._web3 = new Web3(window.ethereum);
     }
   }
 
@@ -126,12 +131,12 @@ class Web3Service {
 
   // 获取当前网络
   async getCurrentNetwork(): Promise<string> {
-    if (!this.web3) {
+    if (!this._web3) {
       throw new Error('Web3 未初始化');
     }
 
     try {
-      const chainId = await this.web3.eth.getChainId();
+      const chainId = await this._web3.eth.getChainId();
       const hexChainId = '0x' + chainId.toString(16);
       const networkName = this.getNetworkNameByChainId(hexChainId);
       this.currentNetwork = networkName;
@@ -144,12 +149,12 @@ class Web3Service {
 
   // 获取当前链ID
   async getCurrentChainId(): Promise<string> {
-    if (!this.web3) {
+    if (!this._web3) {
       throw new Error('Web3 未初始化');
     }
 
     try {
-      const chainId = await this.web3.eth.getChainId();
+      const chainId = await this._web3.eth.getChainId();
       return chainId.toString();
     } catch (error) {
       console.error('获取当前链ID失败:', error);
@@ -159,7 +164,7 @@ class Web3Service {
 
   // 切换网络
   async switchNetwork(networkName: string): Promise<boolean> {
-    if (!this.web3 || !window.ethereum) {
+    if (!this._web3 || !window.ethereum) {
       throw new Error('Web3 或钱包未初始化');
     }
 
@@ -209,13 +214,13 @@ class Web3Service {
 
   // 获取原生代币余额（如ETH）
   async getNativeBalance(address: string): Promise<string> {
-    if (!this.web3) {
+    if (!this._web3) {
       throw new Error('Web3 未初始化');
     }
 
     try {
-      const balance = await this.web3.eth.getBalance(address);
-      const ethBalance = this.web3.utils.fromWei(balance, 'ether');
+      const balance = await this._web3.eth.getBalance(address);
+      const ethBalance = this._web3.utils.fromWei(balance, 'ether');
       return parseFloat(ethBalance).toFixed(6);
     } catch (error) {
       console.error('获取原生代币余额失败:', error);
@@ -225,7 +230,7 @@ class Web3Service {
 
   // 获取ERC20代币余额
   async getTokenBalance(tokenAddress: string, walletAddress: string): Promise<string> {
-    if (!this.web3) {
+    if (!this._web3) {
       throw new Error('Web3 未初始化');
     }
 
@@ -236,7 +241,7 @@ class Web3Service {
 
     try {
       // 创建合约实例
-      const tokenContract = new this.web3.eth.Contract(ERC20_ABI, tokenAddress);
+      const tokenContract = new this._web3.eth.Contract(ERC20_ABI, tokenAddress);
 
       // 获取代币精度
       const decimals = await tokenContract.methods.decimals().call();

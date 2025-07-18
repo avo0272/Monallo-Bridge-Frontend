@@ -22,6 +22,18 @@ interface BridgeRecord {
   targetToTxHash?: string;
   lockedToken?: string;
   mintedToken?: string;
+  // API返回的原始字段
+  sourceFromAddress?: string;
+  targetToAddress?: string;
+  sourceFromAmount?: string;
+  sourceFromHandingFee?: string;
+  sourceFromTxStatus?: string;
+  targetToTxStatus?: string;
+  crossBridgeStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  sourceFromTokenName?: string;
+  targetToTokenName?: string;
 }
 
 // 状态映射
@@ -65,17 +77,35 @@ export default function HistoryTable() {
       setError(null);
       
       // 这里需要替换为实际的后端API地址
-      const response = await axios.get("https://uatbridge.monallo.ai/lockinfo/api/allLock");
+      // const response = await axios.get("https://uatbridge.monallo.ai/lockinfo/api/crossLockInfo");
+      const response = await axios.get("http://192.168.31.176:5000/api/allCrossRecords");
+      console.log(response.data);
       
-      // 处理数据，添加缺失的字段
-      const processedRecords = response.data.map((record: BridgeRecord) => ({
-        ...record,
-        sourceChain: record.sourceChain || "",
-        targetChain: record.targetChain || "",
-        targetTxHash: record.targetToTxHash || "",
-        lockedToken: record.lockedToken || "",
-        mintedToken: record.mintedToken || "",
-      }));
+      // 处理数据，映射API返回的字段到组件使用的字段
+      const processedRecords = response.data.map((record: any) => {
+        // 移除字段中的引号
+        const cleanString = (str: string | undefined) => {
+          if (!str) return "";
+          return str.replace(/['"`]/g, "");
+        };
+        
+        return {
+          ...record,
+          // 映射字段
+          fromAddress: record.sourceFromAddress || "",
+          toAddress: record.targetToAddress || "",
+          amount: record.sourceFromAmount || "",
+          fee: record.sourceFromHandingFee || "",
+          status: record.crossBridgeStatus || record.sourceFromTxStatus || "pending",
+          timestamp: record.createdAt || record.updatedAt || new Date().toISOString(),
+          // 清理字段中的引号
+          sourceChain: cleanString(record.sourceChain),
+          targetChain: cleanString(record.targetChain),
+          targetToTxHash: record.targetToTxHash || "",
+          lockedToken: cleanString(record.sourceFromTokenName),
+          mintedToken: cleanString(record.targetToTokenName),
+        };
+      });
       
       // 按时间戳倒序排列（最新的在前面）
       const sortedRecords = processedRecords.sort((a: BridgeRecord, b: BridgeRecord) => {
@@ -227,7 +257,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={12} height={12} />
+                        <Image src="/share.png" alt="查看" width={30} height={30} />
                       </button>
                     </div>
                   </td>
@@ -247,7 +277,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={12} height={12} />
+                        <Image src="/share.png" alt="查看" width={30} height={30} />
                       </button>
                     </div>
                   </td>
@@ -267,7 +297,7 @@ export default function HistoryTable() {
                         }}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Image src="/share.png" alt="查看" width={12} height={12} />
+                        <Image src="/share.png" alt="查看" width={30} height={30} />
                       </button>
                     </div>
                   </td>
@@ -288,7 +318,7 @@ export default function HistoryTable() {
                           }}
                           className="text-blue-500 hover:text-blue-700"
                         >
-                          <Image src="/share.png" alt="查看" width={12} height={12} />
+                          <Image src="/share.png" alt="查看" width={30} height={30} />
                         </button>
                       </div>
                     ) : (

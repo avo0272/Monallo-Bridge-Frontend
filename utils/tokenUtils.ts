@@ -38,7 +38,7 @@ export interface TokenInfo {
 
 /**
  * 格式化代币数量显示
- * @param amount 数量（wei格式）
+ * @param amount 数量（wei格式或已经是小数形式）
  * @param decimals 代币精度
  * @param displayDecimals 显示精度
  * @returns 格式化后的数量字符串
@@ -52,15 +52,42 @@ export function formatTokenAmount(
     const web3 = new Web3();
     const amountStr = amount.toString();
     
-    // 如果是wei格式，转换为可读格式
-    const formatted = web3.utils.fromWei(amountStr, 'ether');
-    const num = parseFloat(formatted);
+    console.log(`格式化代币数量: 输入=${amountStr}, 代币精度=${decimals}, 显示精度=${displayDecimals}`);
+    
+    let num: number;
+    let originalFormatted: string = '';
+    
+    // 检查输入是否已经是小数形式
+    if (amountStr.includes('.')) {
+      // 已经是小数形式，直接解析
+      num = parseFloat(amountStr);
+      originalFormatted = amountStr;
+      console.log(`输入已是小数形式: ${amountStr} => ${num}`);
+    } else {
+      try {
+        // 尝试作为wei格式转换
+        originalFormatted = web3.utils.fromWei(amountStr, 'ether');
+        num = parseFloat(originalFormatted);
+        console.log(`从wei转换: ${amountStr} => ${originalFormatted} => ${num}`);
+      } catch (conversionError) {
+        // 如果转换失败，尝试直接解析
+        num = parseFloat(amountStr);
+        originalFormatted = amountStr;
+        console.log(`转换失败，直接解析: ${amountStr} => ${num}`);
+        if (isNaN(num)) {
+          throw conversionError; // 如果解析也失败，抛出原始错误
+        }
+      }
+    }
     
     // 格式化显示精度
     if (num === 0) return '0';
-    if (num < 0.000001) return '< 0.000001';
+    if (num < 0.000001 && num > 0) return '< 0.000001';
     
-    return num.toFixed(displayDecimals).replace(/\.?0+$/, '');
+    // 使用原始格式化字符串进行精确的显示
+    const result = num.toFixed(displayDecimals).replace(/\.?0+$/, '');
+    console.log(`格式化结果: ${num} => ${result}`);
+    return result;
   } catch (error) {
     console.error('格式化代币数量失败:', error);
     return '0';
@@ -85,8 +112,16 @@ export function parseTokenAmount(
       throw new Error('无效的数量输入');
     }
     
+    // 处理可能的精度问题
+    // 确保数字格式正确，移除多余的0
+    const normalizedAmount = parseFloat(amount).toString();
+    console.log(`解析代币数量: 原始输入=${amount}, 标准化后=${normalizedAmount}`);
+    
     // 转换为wei格式
-    return web3.utils.toWei(amount, 'ether');
+    const weiAmount = web3.utils.toWei(normalizedAmount, 'ether');
+    console.log(`转换为wei格式: ${normalizedAmount} => ${weiAmount}`);
+    
+    return weiAmount;
   } catch (error) {
     console.error('解析代币数量失败:', error);
     throw new Error('无效的数量格式');
@@ -139,19 +174,39 @@ export function validateTokenAmount(
 
 /**
  * 比较两个代币数量
- * @param amount1 数量1（wei格式）
- * @param amount2 数量2（wei格式）
+ * @param amount1 数量1（可以是wei格式或以太单位格式）
+ * @param amount2 数量2（可以是wei格式或以太单位格式）
  * @returns -1: amount1 < amount2, 0: 相等, 1: amount1 > amount2
  */
 export function compareTokenAmounts(amount1: string, amount2: string): number {
   try {
-    const web3 = new Web3();
-    const bn1 = web3.utils.toBigInt(amount1);
-    const bn2 = web3.utils.toBigInt(amount2);
+    // 使用parseFloat直接比较数值，避免BigInt不支持小数的问题
+    const num1 = parseFloat(amount1);
+    const num2 = parseFloat(amount2);
     
-    if (bn1 < bn2) return -1;
-    if (bn1 > bn2) return 1;
-    return 0;
+    if (isNaN(num1) || isNaN(num2)) {
+      throw new Error(`无效的数值: ${amount1} 或 ${amount2}`);
+    }
+    
+    // 处理浮点数精度问题，使用一个更合适的epsilon值
+    // 对于小数点后4位的数字（如0.0001），使用更小的epsilon
+    const smallestValue = Math.min(Math.abs(num1), Math.abs(num2));
+    // 动态调整epsilon，确保它足够小但不会太小
+    const epsilon = Math.max(1e-12, smallestValue * 1e-6);
+    const diff = num1 - num2;
+    
+    console.log(`比较数值: ${num1} vs ${num2}, 差值: ${diff}, epsilon: ${epsilon}, 最小值: ${smallestValue}`);
+    
+    if (Math.abs(diff) < epsilon) {
+      console.log(`数值被认为相等: |${diff}| < ${epsilon}`);
+      return 0; // 认为数值相等
+    }
+    if (diff < 0) {
+      console.log(`${num1} < ${num2}`);
+      return -1;
+    }
+    console.log(`${num1} > ${num2}`);
+    return 1;
   } catch (error) {
     console.error('比较代币数量失败:', error);
     return 0;
@@ -159,23 +214,27 @@ export function compareTokenAmounts(amount1: string, amount2: string): number {
 }
 
 /**
- * 检查余额是否足够
- * @param balance 当前余额（wei格式）
- * @param amount 需要的数量（wei格式）
+ * 检查代币余额是否足够
+ * @param balance 当前余额（wei格式或以太单位格式）
+ * @param amount 需要的数量（wei格式或以太单位格式）
  * @returns 是否足够
  */
 export function hasSufficientBalance(balance: string, amount: string): boolean {
-  return compareTokenAmounts(balance, amount) >= 0;
+  const comparisonResult = compareTokenAmounts(balance, amount);
+  console.log(`余额比较结果: ${comparisonResult} (balance: ${balance}, amount: ${amount})`);
+  return comparisonResult >= 0;
 }
 
 /**
  * 检查授权额度是否足够
- * @param allowance 当前授权额度（wei格式）
- * @param amount 需要的数量（wei格式）
+ * @param allowance 当前授权额度（wei格式或以太单位格式）
+ * @param amount 需要的数量（wei格式或以太单位格式）
  * @returns 是否足够
  */
 export function hasSufficientAllowance(allowance: string, amount: string): boolean {
-  return compareTokenAmounts(allowance, amount) >= 0;
+  const comparisonResult = compareTokenAmounts(allowance, amount);
+  console.log(`授权比较结果: ${comparisonResult} (allowance: ${allowance}, amount: ${amount})`);
+  return comparisonResult >= 0;
 }
 
 /**

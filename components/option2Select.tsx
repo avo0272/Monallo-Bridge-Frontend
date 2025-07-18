@@ -45,7 +45,7 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
     ],
     "Imua-Testnet": [
       { symbol: "IMUA", network: "Imua-Testnet", address: "" },
-      { symbol: "maoETH", network: "Imua-Testnet", address: "0x21717FD336Db40Af910603f8a8b4aA202736C4Ec" },
+      { symbol: "maoETH", network: "Imua-Testnet", address: "0x06fF2cfbAAFDfcFbd4604B98C8a343dfa693476e" },
       { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
       { symbol: "maoEURC", network: "Imua-Testnet", address: "" },
       { symbol: "maoZETA", network: "Imua-Testnet", address: ""}
