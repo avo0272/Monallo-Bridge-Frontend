@@ -1,6 +1,6 @@
 import Web3 from 'web3';
 
-// 网络配置接口
+// Network configuration interface
 interface NetworkConfig {
   chainId: string;
   chainName: string;
@@ -13,7 +13,7 @@ interface NetworkConfig {
   blockExplorerUrls: string[];
 }
 
-// 支持的网络配置
+// Supported network configurations
 export const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
   'Ethereum-Sepolia': {
     chainId: '0xaa36a7', // 11155111
@@ -50,7 +50,7 @@ export const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
   },
 };
 
-// ERC20代币标准ABI
+// ERC20 token standard ABI
 const ERC20_ABI = [
   {
     "constant": true,
@@ -85,19 +85,19 @@ class Web3Service {
     this.setupEventListeners();
   }
   
-  // 获取web3实例的公共访问器
+  // Public accessor for web3 instance
   get web3(): Web3 | null {
     return this._web3;
   }
 
-  // 初始化Web3
+  // Initialize Web3
   private initializeWeb3() {
     if (typeof window !== 'undefined' && window.ethereum) {
       this._web3 = new Web3(window.ethereum);
     }
   }
 
-  // 设置事件监听器
+  // Set up event listeners
   private setupEventListeners() {
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum.on('chainChanged', (chainId: string) => {

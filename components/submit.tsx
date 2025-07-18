@@ -16,6 +16,8 @@ import {
     formatAddress,
     generateTransactionId
 } from "../utils/tokenUtils";
+import BridgeProgressBar from "./BridgeProgressBar";
+import BurnProgressBar from "./BurnProgressBar";
 import {
     CURRENT_ENDPOINTS,
     ERROR_MESSAGES,
@@ -30,8 +32,8 @@ type Token = {
 };
 
 type SubmitProps = {
-    onConnectWallet?: () => void; // 可选的连接钱包回调函数
-    receiverAddress?: string; // 可选的接收者地址
+    onConnectWallet?: () => void; // 可选的钱包连接回调函数
+    receiverAddress?: string; // 可选的接收地址
     amount?: string; // 可选的金额参数
     selectedToken1?: Token; // 可选的源代币信息
     selectedToken2?: Token; // 可选的目标代币信息
@@ -55,6 +57,13 @@ type TransactionData = {
     amount: string;
     sourceFromTxHash: string;
     fee: string | null;
+};
+
+// 定义进度步骤类型
+type BridgeStep = {
+    status: 'pending' | 'active' | 'completed' | 'failed';
+    title: string;
+    txHash?: string;
 };
 
 // 定义状态类型
@@ -82,9 +91,25 @@ type State = {
     isCheckingAuthorization: boolean;
     isAuthorizing: boolean;
     authorizedAmount: string;
+    // 锁定代币进度条相关状态
+    bridgeSteps: {
+        lockPending: BridgeStep;
+        lockCompleted: BridgeStep;
+        mintPending: BridgeStep;
+        mintCompleted: BridgeStep;
+    };
+    currentStep: 'lockPending' | 'lockCompleted' | 'mintPending' | 'mintCompleted' | null;
+    // 销毁代币进度条相关状态
+    burnSteps: {
+        burnPending: BridgeStep;
+        burnCompleted: BridgeStep;
+        mintPending: BridgeStep;
+        mintCompleted: BridgeStep;
+    };
+    currentBurnStep: 'burnPending' | 'burnCompleted' | 'mintPending' | 'mintCompleted' | null;
 };
 
-// 定义操作类型
+// 定义动作类型
 type Action =
     | { type: 'SET_CONNECTED', payload: boolean }
     | { type: 'SET_PROCESSING', payload: boolean }
@@ -97,13 +122,17 @@ type Action =
     | { type: 'SET_SHOW_MINT_STATUS', payload: boolean }
     | { type: 'SET_WALLET_ADDRESS', payload: string }
     | { type: 'HANDLE_WEBSOCKET_MESSAGE', payload: MintMessage }
+    | { type: 'SET_CURRENT_STEP', payload: State['currentStep'] }
+    | { type: 'UPDATE_BRIDGE_STEP', payload: { step: keyof State['bridgeSteps'], data: Partial<BridgeStep> } }
     | { type: 'PREPARE_BRIDGE_TRANSACTION', payload: State['transactionDetails'] }
     | { type: 'CLEAR_MINT_STATUS' }
     | { type: 'CLOSE_CONFIRM_DIALOG' }
     | { type: 'SET_NEEDS_AUTHORIZATION', payload: boolean }
     | { type: 'SET_CHECKING_AUTHORIZATION', payload: boolean }
     | { type: 'SET_AUTHORIZING', payload: boolean }
-    | { type: 'SET_AUTHORIZED_AMOUNT', payload: string };
+    | { type: 'SET_AUTHORIZED_AMOUNT', payload: string }
+    | { type: 'SET_CURRENT_BURN_STEP', payload: State['currentBurnStep'] }
+    | { type: 'UPDATE_BURN_STEP', payload: { step: keyof State['burnSteps'], data: Partial<BridgeStep> } };
 
 // 定义reducer函数
 function reducer(state: State, action: Action): State {
@@ -140,14 +169,130 @@ function reducer(state: State, action: Action): State {
                         message: 'Minting successful!',
                         targetToTxHash: data.data?.targetToTxHash
                     };
+                    
+                    // Update progress bar status - minting successful
+                    // Use dispatch function to update progress bar status directly without setTimeout
+                    const dispatchAction = (action: Action) => {
+                        state = reducer(state, action);
+                        return state;
+                    };
+                    
+                    // Update lock token progress bar status - mark mintPending as completed
+                    dispatchAction({ 
+                        type: 'UPDATE_BRIDGE_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    
+                    // Update lock token progress bar status - mark mintCompleted as completed directly
+                    dispatchAction({ 
+                        type: 'UPDATE_BRIDGE_STEP', 
+                        payload: { 
+                            step: 'mintCompleted', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    dispatchAction({ type: 'SET_CURRENT_STEP', payload: 'mintCompleted' });
+                    
+                    // Update burn token progress bar status - mark mintPending as completed
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    
+                    // Update burn token progress bar status - mark mintCompleted as completed directly
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintCompleted', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    dispatchAction({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintCompleted' });
                 } else if (data.type === 'MINT_FAILURE') {
                     newMintStatus = {
                         success: false,
                         message: data.message || 'Minting failed',
                         targetToTxHash: data.data?.targetToTxHash
                     };
+                    
+                    // Update progress bar status - minting failed
+                    // Use dispatch function to update progress bar status directly without setTimeout
+                    const dispatchAction = (action: Action) => {
+                        state = reducer(state, action);
+                        return state;
+                    };
+                    
+                    // Update lock token progress bar status - minting failed
+                    dispatchAction({ 
+                        type: 'UPDATE_BRIDGE_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'failed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    dispatchAction({ 
+                        type: 'UPDATE_BRIDGE_STEP', 
+                        payload: { 
+                            step: 'mintCompleted', 
+                            data: { status: 'failed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    
+                    // Update burn token progress bar status - minting failed
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'failed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintCompleted', 
+                            data: { status: 'failed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                } else if (data.type === 'UNLOCK_SUCCESS') {
+                    newMintStatus = {
+                        success: true,
+                        message: 'Unlock successful!',
+                        targetToTxHash: data.data?.targetToTxHash
+                    };
+                    
+                    // Update progress bar status - unlock successful
+                    // Use dispatch function to update progress bar status directly without setTimeout
+                    const dispatchAction = (action: Action) => {
+                        state = reducer(state, action);
+                        return state;
+                    };
+                    
+                    // Update burn token progress bar status - mark mintPending as completed
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    
+                    // Update burn token progress bar status - mark mintCompleted as completed directly
+                    dispatchAction({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintCompleted', 
+                            data: { status: 'completed', txHash: data.data?.targetToTxHash } 
+                        } 
+                    });
+                    dispatchAction({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintCompleted' });
                 } else {
-                    // 处理其他类型的消息
+                    // Handle other types of messages
                     newMintStatus = {
                         success: data.success,
                         message: data.message || 'Received minting status update',
@@ -181,6 +326,22 @@ function reducer(state: State, action: Action): State {
                 ...state,
                 showConfirmDialog: false
             };
+        case 'SET_CURRENT_STEP':
+            return {
+                ...state,
+                currentStep: action.payload
+            };
+        case 'UPDATE_BRIDGE_STEP':
+            return {
+                ...state,
+                bridgeSteps: {
+                    ...state.bridgeSteps,
+                    [action.payload.step]: {
+                        ...state.bridgeSteps[action.payload.step],
+                        ...action.payload.data
+                    }
+                }
+            };
         case 'SET_NEEDS_AUTHORIZATION':
             return {
                 ...state,
@@ -200,6 +361,22 @@ function reducer(state: State, action: Action): State {
             return {
                 ...state,
                 authorizedAmount: action.payload
+            };
+        case 'SET_CURRENT_BURN_STEP':
+            return {
+                ...state,
+                currentBurnStep: action.payload
+            };
+        case 'UPDATE_BURN_STEP':
+            return {
+                ...state,
+                burnSteps: {
+                    ...state.burnSteps,
+                    [action.payload.step]: {
+                        ...state.burnSteps[action.payload.step],
+                        ...action.payload.data
+                    }
+                }
             };
         default:
             return state;
@@ -229,7 +406,47 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         needsAuthorization: false,
         isCheckingAuthorization: false,
         isAuthorizing: false,
-        authorizedAmount: "0"
+        authorizedAmount: "0",
+        // Initialize lock token progress bar status
+        bridgeSteps: {
+            lockPending: {
+                status: 'pending',
+                title: 'Locking'
+            },
+            lockCompleted: {
+                status: 'pending',
+                title: 'Lock Completed'
+            },
+            mintPending: {
+                status: 'pending',
+                title: 'Unlock'
+            },
+            mintCompleted: {
+                status: 'pending',
+                title: 'Mint Completed'
+            }
+        },
+        currentStep: null,
+        // Initialize burn token progress bar status
+        burnSteps: {
+            burnPending: {
+                status: 'pending',
+                title: 'Burning'
+            },
+            burnCompleted: {
+                status: 'pending',
+                title: 'Burn Completed'
+            },
+            mintPending: {
+                status: 'pending',
+                title: 'Unlocking'
+            },
+            mintCompleted: {
+                status: 'pending',
+                title: 'Unlock Completed'
+            }
+        },
+        currentBurnStep: null
     };
     
     // 使用useReducer替代多个useState
@@ -261,13 +478,13 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             // 获取当前网络
             const currentNetwork = await web3Service.getCurrentNetwork();
             
-            // 获取销毁合约地址
+            // Get burn contract address
             const burnContractAddress = contractService.getBurnContractAddress(currentNetwork);
             if (!burnContractAddress) {
-                throw new Error(`网络 ${currentNetwork} 没有配置销毁合约地址`);
+                throw new Error(`Network ${currentNetwork} does not have a configured burn contract address`);
             }
             
-            // 直接从合约检查授权额度
+            // Check authorization amount directly from contract
             const authorizedAmount = await contractService.checkAllowance(
                 sourceToken.address,
                 state.walletAddress,
@@ -276,14 +493,14 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             
             dispatch({ type: 'SET_AUTHORIZED_AMOUNT', payload: authorizedAmount });
             
-            // 检查授权金额是否足够
+            // Check if authorization amount is sufficient
             const needsAuth = parseFloat(authorizedAmount) < parseFloat(amount);
             dispatch({ type: 'SET_NEEDS_AUTHORIZATION', payload: needsAuth });
             console.log(state.walletAddress);
             console.log(sourceToken.address);
             
             
-            // 同时发送POST请求到后端（保持兼容性）
+            // Also send POST request to backend (for compatibility)
             try {
                 const chainId = await web3Service.getCurrentChainId();
                 await axios.post(CURRENT_ENDPOINTS.GET_AMOUNT, {
@@ -295,18 +512,18 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 });
             } catch (backendError) {
                 console.warn('Failed to sync with backend:', backendError);
-                // 如果是404错误（记录不存在），则视返回结果为0
+                // If 404 error (record doesn't exist), treat result as 0
                 if ((backendError as any).response && (backendError as any).response.status === 404) {
                     console.log('Record not found, treating authorized amount as 0');
                     dispatch({ type: 'SET_AUTHORIZED_AMOUNT', payload: '0' });
                     dispatch({ type: 'SET_NEEDS_AUTHORIZATION', payload: true });
                 }
-                // 不影响主流程
+                // Does not affect main process
             }
             
         } catch (error) {
             console.error('Failed to check authorization:', error);
-            // 如果检查失败，假设需要授权
+            // If check fails, assume authorization is needed
             dispatch({ type: 'SET_NEEDS_AUTHORIZATION', payload: true });
             dispatch({ type: 'SET_AUTHORIZED_AMOUNT', payload: '0' });
         } finally {
@@ -314,7 +531,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         }
     };
 
-    // 当代币、金额或钱包地址变化时检查授权状态
+    // Check authorization status when token, amount, or wallet address changes
     useEffect(() => {
         checkAuthorization();
     }, [sourceToken.symbol, sourceToken.address, amount, state.walletAddress]);
@@ -331,26 +548,26 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
 
         dispatch({ type: 'SET_AUTHORIZING', payload: true });
         try {
-            // 获取当前网络
+            // Get current network
             const currentNetwork = await web3Service.getCurrentNetwork();
             
-            // 获取销毁合约地址
+            // Get burn contract address
             const burnContractAddress = contractService.getBurnContractAddress(currentNetwork);
             if (!burnContractAddress) {
-                throw new Error(`网络 ${currentNetwork} 没有配置销毁合约地址`);
+                throw new Error(`Network ${currentNetwork} does not have a configured burn contract address`);
             }
             
-            // 检查代币余额
+            // Check token balance
             const tokenBalance = await contractService.getTokenBalance(
                 sourceToken.address,
                 state.walletAddress
             );
             
             if (parseFloat(tokenBalance) < parseFloat(amount)) {
-                throw new Error(`代币余额不足。当前余额: ${tokenBalance} ${sourceToken.symbol}`);
+                throw new Error(`Insufficient token balance. Current balance: ${tokenBalance} ${sourceToken.symbol}`);
             }
             
-            // 调用合约服务进行授权
+            // Call contract service for authorization
             const txHash = await contractService.approveToken(
                 sourceToken.address,
                 burnContractAddress,
@@ -359,7 +576,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             
             console.log('Authorization transaction hash:', txHash);
             
-            // 授权成功后，发送信息到后端
+            // Send information to backend after successful authorization
             await sendAuthorizationToBackend({
                 contractAddress: sourceToken.address,
                 chainId: await web3Service.getCurrentChainId(),
@@ -368,18 +585,18 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 address: state.walletAddress,
             });
             
-            // 等待一段时间让交易确认
+            // Wait for transaction confirmation
             setTimeout(async () => {
                 await checkAuthorization();
             }, 3000);
             
-            // 显示授权成功弹窗
+            // Show authorization success popup
             dispatch({ 
                 type: 'SET_MINT_STATUS', 
                 payload: {
                     success: true,
-                    message: 'Authorization successful! Please wait for transaction confirmation.',
-                    targetToTxHash: txHash
+                    message: 'Authorization successful!',
+                    targetToTxHash: undefined // Don't show transaction hash
                 }
             });
             dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: true });
@@ -407,7 +624,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             console.log('Authorization data sent to backend:', response.data);
         } catch (error) {
             console.error('Failed to send authorization data to backend:', error);
-            // 不抛出错误，因为授权本身已经成功
+            // Don't throw error because the authorization itself was successful
         }
     };
     
@@ -451,7 +668,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 dispatch({ type: 'SET_WALLET_ADDRESS', payload: currentAddress });
             };
             
-            // 创建自定义事件监听器，用于跨组件通信
+            // Create custom event listener for cross-component communication
             window.addEventListener("storage", handleStorageChange);
             document.addEventListener("walletChanged", handleStorageChange);
             
@@ -462,24 +679,24 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         }
     }, []);
     
-    // 处理连接钱包按钮点击
+    // Handle connect wallet button click
     function handleConnectClick() {
-        // 尝试重新连接WebSocket
+        // Try to reconnect WebSocket
         triggerReconnect();
         
-        // 如果提供了onConnectWallet回调，则调用它
+        // If onConnectWallet callback is provided, call it
         if (onConnectWallet) {
             onConnectWallet();
         } else {
-            // 否则，触发一个自定义事件，通知header组件显示钱包下拉框
+            // Otherwise, trigger a custom event to notify header component to show wallet dropdown
             const event = new CustomEvent("showWalletDropdown");
             document.dispatchEvent(event);
         }
     }
     
-    // 处理Bridge按钮点击 - 显示确认对话框
+    // Handle Bridge button click - show confirmation dialog
     async function handleBridgeClick() {
-        // 尝试重新连接WebSocket
+        // Try to reconnect WebSocket
         triggerReconnect();
         
         if (!window.ethereum) {
@@ -488,20 +705,20 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         }
         
         try {
-            // 获取当前连接的钱包地址
+            // Get current connected wallet address
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const currentAddress = accounts[0];
             
-            // 确定接收者地址，如果未提供则使用当前钱包地址
+            // Determine receiver address, use current wallet address if not provided
             const receiver = receiverAddress || currentAddress;
             
-            // 获取当前网络
+            // Get current network
             const currentNetwork = await web3Service.getCurrentNetwork();
             
-            // 确定发送金额，如果未提供则使用默认值
+            // Determine sending amount, use default value if not provided
             const value = amount || '';
             
-            // 设置交易详情并显示确认对话框
+            // Set transaction details and show confirmation dialog
             dispatch({ 
                 type: 'PREPARE_BRIDGE_TRANSACTION', 
                 payload: {
@@ -518,15 +735,46 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         }
     }
     
-    // 确认锁币操作
+    // Confirm lock operation
     async function confirmBridgeTransaction() {
         if (!state.transactionDetails) return;
         
         dispatch({ type: 'SET_SHOW_CONFIRM_DIALOG', payload: false });
         dispatch({ type: 'SET_PROCESSING', payload: true });
         
-        // 清除之前的状态
+        // Clear previous status
         dispatch({ type: 'CLEAR_MINT_STATUS' });
+        
+        // Reset progress bar status
+        dispatch({ 
+            type: 'UPDATE_BRIDGE_STEP', 
+            payload: { 
+                step: 'lockPending', 
+                data: { status: 'active', title: 'Locking', txHash: undefined } 
+            } 
+        });
+        dispatch({ 
+            type: 'UPDATE_BRIDGE_STEP', 
+            payload: { 
+                step: 'lockCompleted', 
+                data: { status: 'pending', title: 'Lock Completed', txHash: undefined } 
+            } 
+        });
+        dispatch({ 
+            type: 'UPDATE_BRIDGE_STEP', 
+            payload: { 
+                step: 'mintPending', 
+                data: { status: 'pending', title: 'Minting', txHash: undefined } 
+            } 
+        });
+        dispatch({ 
+            type: 'UPDATE_BRIDGE_STEP', 
+            payload: { 
+                step: 'mintCompleted', 
+                data: { status: 'pending', title: 'Mint Completed', txHash: undefined } 
+            } 
+        });
+        dispatch({ type: 'SET_CURRENT_STEP', payload: 'lockPending' });
         
         try {
             const { currentAddress, receiver, value, currentNetwork } = state.transactionDetails;
@@ -539,11 +787,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             console.log("- Source token:", sourceToken.symbol, sourceToken.address);
             console.log("- Target token:", targetToken.symbol, targetToken.address);
             
-            // 验证网络配置
+            // Validate network configuration
             const networkConfig = contractService.validateNetworkConfig(currentNetwork);
             console.log("Network configuration:", networkConfig);
             
-            // 显示处理中状态
+            // Show processing status
             dispatch({ 
                     type: 'SET_MINT_STATUS', 
                     payload: {
@@ -552,19 +800,50 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 });
             dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: true });
             
-            // 检查网络配置是否完整
+            // Check if network configuration is complete
             if (!networkConfig.lockContractAddress && !contractService.getBurnContractAddress(currentNetwork)) {
-                throw new Error(`网络 ${currentNetwork} 配置不完整，缺少合约地址`);
+                throw new Error(`Network ${currentNetwork} configuration is incomplete, missing contract address`);
             }
             
-            // 根据代币类型和授权状态选择合约操作
+            // Choose contract operation based on token type and authorization status
             let result;
             if (sourceToken.symbol.startsWith('mao') && parseFloat(state.authorizedAmount) >= parseFloat(value)) {
-                // 如果是mao代币且已有足够授权，调用销毁合约
+                // If it's a mao token and has sufficient authorization, call the burn contract
                 const burnContractAddress = contractService.getBurnContractAddress(currentNetwork);
                 if (!burnContractAddress) {
-                    throw new Error(`网络 ${currentNetwork} 不支持销毁操作`);
+                    throw new Error(`Network ${currentNetwork} does not support burn operation`);
                 }
+                
+                // Initialize burn progress bar status
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'burnPending', 
+                        data: { status: 'active' } 
+                    } 
+                });
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'burnCompleted', 
+                        data: { status: 'pending' } 
+                    } 
+                });
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'mintPending', 
+                        data: { status: 'pending' } 
+                    } 
+                });
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'mintCompleted', 
+                        data: { status: 'pending' } 
+                    } 
+                });
+                dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'burnPending' });
                 
                 dispatch({ 
                      type: 'SET_MINT_STATUS', 
@@ -573,21 +852,21 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                      }
                  });
                 
-                // 获取代币信息
+                // Get token information
                 const tokenName = await contractService.getTokenName(sourceToken.address);
                 const tokenSymbol = await contractService.getTokenSymbol(sourceToken.address);
                 const tokenDecimals = await contractService.getTokenDecimals(sourceToken.address);
                 
                 console.log(`Token info: ${tokenName} (${tokenSymbol}), decimals: ${tokenDecimals}`);
                 
-                // 再次检查授权状态以确保安全
+                // Check authorization status again to ensure safety
                 const currentAllowance = await contractService.checkAllowance(
                     sourceToken.address,
                     currentAddress,
                     burnContractAddress
                 );
                 
-                // 检查代币余额
+                // Check token balance
                 const tokenBalance = await contractService.getTokenBalance(
                     sourceToken.address,
                     currentAddress
@@ -596,59 +875,59 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 console.log("Current allowance:", currentAllowance);
                 console.log("Token balance:", tokenBalance);
                 
-                // 验证输入数量格式
+                // Validate input amount format
                 const validation = validateTokenAmount(value, tokenDecimals);
                 if (!validation.isValid) {
-                    throw new Error(validation.error || '数量格式无效');
+                    throw new Error(validation.error || 'Invalid amount format');
                 }
                 
-                // 格式化数量进行比较
-                // 确保使用相同的格式进行比较
-                // 如果currentAllowance是wei格式，则将value也转换为wei格式
+                // Format amount for comparison
+                // Ensure using the same format for comparison
+                // If currentAllowance is in wei format, convert value to wei format as well
                 const formattedValue = parseTokenAmount(value, tokenDecimals);
-                // 将wei格式的值转换为以太单位，用于后续比较
-                // 使用Web3实例直接从tokenUtils中获取，避免依赖web3Service.web3
+                // Convert wei format value to ether unit for subsequent comparison
+                // Use Web3 instance directly from tokenUtils to avoid dependency on web3Service.web3
                 const web3 = new Web3();
                 const formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
                 
-                // 使用工具函数检查授权和余额
-                console.log("授权比较:", "当前授权(原始值):", currentAllowance, "需要金额(原始值):", formattedValue);
-                console.log("授权比较:", "当前授权(格式化):", formatTokenAmount(currentAllowance, tokenDecimals), "需要金额(格式化):", formatTokenAmount(formattedValue, tokenDecimals));
+                // Use utility functions to check authorization and balance
+                console.log("Authorization comparison:", "Current authorization (original value):", currentAllowance, "Required amount (original value):", formattedValue);
+                console.log("Authorization comparison:", "Current authorization (formatted):", formatTokenAmount(currentAllowance, tokenDecimals), "Required amount (formatted):", formatTokenAmount(formattedValue, tokenDecimals));
                 
-                // 确保使用正确的格式比较
-                // currentAllowance是以太单位（从checkAllowance返回），需要与formattedValueInEther（也是以太单位）比较
-                console.log("统一单位后比较:", "当前授权(以太单位):", currentAllowance, "需要金额(以太单位):", formattedValueInEther);
+                // Ensure using the correct format for comparison
+                // currentAllowance is in ether unit (returned from checkAllowance), needs to be compared with formattedValueInEther (also in ether unit)
+                console.log("Comparison after unit standardization:", "Current authorization (ether unit):", currentAllowance, "Required amount (ether unit):", formattedValueInEther);
                 
                 const hasAllowance = hasSufficientAllowance(currentAllowance, formattedValueInEther);
-                console.log("授权是否足够:", hasAllowance);
+                console.log("Is authorization sufficient:", hasAllowance);
                 
                 if (!hasAllowance) {
-                    // 确保使用正确的格式化方法
-                    // currentAllowance和formattedValueInEther都是以太单位，直接格式化
+                    // Ensure using the correct formatting method
+                    // currentAllowance and formattedValueInEther are both in ether unit, format directly
                     const displayAllowance = formatTokenAmount(currentAllowance, tokenDecimals);
                     const displayValue = formatTokenAmount(formattedValueInEther, tokenDecimals);
-                    console.log(`错误消息中的值: 当前授权=${displayAllowance}, 需要=${displayValue}`);
-                    throw new Error(`授权额度不足，当前授权: ${displayAllowance} ${tokenSymbol}，需要: ${displayValue} ${tokenSymbol}`);
+                    console.log(`Values in error message: Current authorization=${displayAllowance}, Required=${displayValue}`);
+                    throw new Error(`Insufficient authorization, current authorization: ${displayAllowance} ${tokenSymbol}, required: ${displayValue} ${tokenSymbol}`);
                 }
                 
-                // 检查余额是否足够
-                console.log("余额比较:", "当前余额(原始值):", tokenBalance, "需要金额(原始值):", formattedValue);
-                console.log("余额比较:", "当前余额(格式化):", formatTokenAmount(tokenBalance, tokenDecimals), "需要金额(格式化):", formatTokenAmount(formattedValue, tokenDecimals));
+                // Check if balance is sufficient
+                console.log("Balance comparison:", "Current balance (original value):", tokenBalance, "Required amount (original value):", formattedValue);
+                console.log("Balance comparison:", "Current balance (formatted):", formatTokenAmount(tokenBalance, tokenDecimals), "Required amount (formatted):", formatTokenAmount(formattedValue, tokenDecimals));
                 
-                // 确保使用相同的单位进行比较
-                // tokenBalance是以太单位（从getTokenBalance返回），需要与formattedValueInEther比较
-                console.log("统一单位后比较:", "当前余额(以太单位):", tokenBalance, "需要金额(以太单位):", formattedValueInEther);
+                // Ensure using the same unit for comparison
+                // tokenBalance is in ether unit (returned from getTokenBalance), needs to be compared with formattedValueInEther
+                console.log("Comparison after unit standardization:", "Current balance (ether unit):", tokenBalance, "Required amount (ether unit):", formattedValueInEther);
                 
                 const hasBalance = hasSufficientBalance(tokenBalance, formattedValueInEther);
-                console.log("余额是否足够:", hasBalance);
+                console.log("Is balance sufficient:", hasBalance);
                 
                 if (!hasBalance) {
-                    // 确保使用正确的格式化方法
-                    // tokenBalance和formattedValueInEther都是以太单位，直接格式化
+                    // Ensure using the correct formatting method
+                    // tokenBalance and formattedValueInEther are both in ether unit, format directly
                     const displayBalance = formatTokenAmount(tokenBalance, tokenDecimals);
                     const displayValue = formatTokenAmount(formattedValueInEther, tokenDecimals);
-                    console.log(`错误消息中的值: 当前余额=${displayBalance}, 需要=${displayValue}`);
-                    throw new Error(`代币余额不足，当前余额: ${displayBalance} ${tokenSymbol}，需要: ${displayValue} ${tokenSymbol}`);
+                    console.log(`Values in error message: Current balance=${displayBalance}, Required=${displayValue}`);
+                    throw new Error(`Insufficient token balance, current balance: ${displayBalance} ${tokenSymbol}, required: ${displayValue} ${tokenSymbol}`);
                 }
                 
                 dispatch({ 
@@ -666,9 +945,9 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     tokenAddress: sourceToken.address
                 });
             } else {
-                // 否则调用锁币合约
+                // Otherwise call the lock contract
                 if (!networkConfig.lockContractAddress) {
-                    throw new Error(`网络 ${currentNetwork} 不支持锁币操作`);
+                    throw new Error(`Network ${currentNetwork} does not support lock operation`);
                 }
                 
                 dispatch({ 
@@ -691,13 +970,52 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             dispatch({ type: 'SET_TX_HASH', payload: txHash });
             console.log("Transaction successful:", txHash);
             
-            // 提取fee信息，如果有的话
+            // If it's a burn operation, update burn progress bar status
+            if (sourceToken.symbol.startsWith('mao')) {
+                // Update burn completion status
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'burnPending', 
+                        data: { status: 'completed', txHash: txHash } 
+                    } 
+                });
+                dispatch({ 
+                    type: 'UPDATE_BURN_STEP', 
+                    payload: { 
+                        step: 'burnCompleted', 
+                        data: { status: 'active', txHash: txHash } 
+                    } 
+                });
+                dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'burnCompleted' });
+                
+                // Update minting status
+                setTimeout(() => {
+                    dispatch({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'burnCompleted', 
+                            data: { status: 'completed' } 
+                        } 
+                    });
+                    dispatch({ 
+                        type: 'UPDATE_BURN_STEP', 
+                        payload: { 
+                            step: 'mintPending', 
+                            data: { status: 'active' } 
+                        } 
+                    });
+                    dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintPending' });
+                }, 1000);
+            }
+            
+            // Extract fee information, if available
             let fee = null;
             if (result.events && result.events.Locked) {
                 fee = result.events.Locked.returnValues.fee;
             }
             
-            // 准备发送到后端的数据
+            // Prepare data to be sent to backend
             const transactionData: TransactionData = {
                 fromAddress: currentAddress,
                 toAddress: receiver,
@@ -709,7 +1027,43 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             // Print all data
             console.log("Data to be sent to backend:", transactionData);
             
-            // 更新状态为锁币成功，等待铸币
+            // Update lock completion status
+            dispatch({ 
+                type: 'UPDATE_BRIDGE_STEP', 
+                payload: { 
+                    step: 'lockPending', 
+                    data: { status: 'completed', txHash: txHash } 
+                } 
+            });
+            dispatch({ 
+                type: 'UPDATE_BRIDGE_STEP', 
+                payload: { 
+                    step: 'lockCompleted', 
+                    data: { status: 'active', txHash: txHash } 
+                } 
+            });
+            dispatch({ type: 'SET_CURRENT_STEP', payload: 'lockCompleted' });
+            
+            // Update minting status
+            setTimeout(() => {
+                dispatch({ 
+                    type: 'UPDATE_BRIDGE_STEP', 
+                    payload: { 
+                        step: 'lockCompleted', 
+                        data: { status: 'completed' } 
+                    } 
+                });
+                dispatch({ 
+                    type: 'UPDATE_BRIDGE_STEP', 
+                    payload: { 
+                        step: 'mintPending', 
+                        data: { status: 'active' } 
+                    } 
+                });
+                dispatch({ type: 'SET_CURRENT_STEP', payload: 'mintPending' });
+            }, 1000);
+            
+            // Update status to lock successful, waiting for minting
             dispatch({ 
                 type: 'SET_MINT_STATUS', 
                 payload: {
@@ -719,11 +1073,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 }
             });
             
-            // 发送数据到后端
+            // Send data to backend
             await sendDataToBackend(transactionData);
             
-            // 注意：此时不设置isProcessing为false，因为我们仍在等待WebSocket消息
-            // WebSocket消息处理函数会在收到铸币确认后设置isProcessing为false
+            // Note: We don't set isProcessing to false at this point because we're still waiting for WebSocket messages
+            // The WebSocket message handler will set isProcessing to false after receiving minting confirmation
             
         } catch (error) {
             console.error("Bridge transaction failed:", error);
@@ -735,20 +1089,21 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 errorMessage = String(error);
             }
             
-            // 根据错误类型提供更友好的错误信息
+            // Provide more friendly error messages based on error type
              if (errorMessage.includes('User denied')) {
                  errorMessage = ERROR_MESSAGES.TRANSACTION_REJECTED;
              } else if (errorMessage.includes('insufficient funds')) {
                  errorMessage = ERROR_MESSAGES.INSUFFICIENT_BALANCE;
              } else if (errorMessage.includes('gas')) {
                  errorMessage = ERROR_MESSAGES.INSUFFICIENT_GAS;
-             } else if (errorMessage.includes('授权额度不足')) {
+             } else if (errorMessage.includes('Insufficient authorization') || errorMessage.includes('授权额度不足')) {
                  errorMessage = ERROR_MESSAGES.INSUFFICIENT_ALLOWANCE;
-             } else if (errorMessage.includes('代币余额不足')) {
+             } else if (errorMessage.includes('Insufficient token balance') || errorMessage.includes('代币余额不足')) {
                  errorMessage = ERROR_MESSAGES.INSUFFICIENT_BALANCE;
-             } else if (errorMessage.includes('网络') && errorMessage.includes('不支持')) {
+             } else if (errorMessage.includes('Network') && errorMessage.includes('not support') || 
+                       errorMessage.includes('网络') && errorMessage.includes('不支持')) {
                  errorMessage = ERROR_MESSAGES.NETWORK_NOT_SUPPORTED;
-             } else if (errorMessage.includes('数量格式')) {
+             } else if (errorMessage.includes('Invalid amount') || errorMessage.includes('数量格式')) {
                  errorMessage = ERROR_MESSAGES.INVALID_AMOUNT;
              } else if (!errorMessage || errorMessage === 'Transaction failed') {
                  errorMessage = ERROR_MESSAGES.TRANSACTION_FAILED;
@@ -767,7 +1122,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         }
     }
     
-    // 取消锁币操作
+    // Cancel lock operation
     function cancelBridgeTransaction() {
         dispatch({ type: 'CLOSE_CONFIRM_DIALOG' });
     }
@@ -776,22 +1131,22 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
     async function sendDataToBackend(data: TransactionData) {
         dispatch({ type: 'SET_SENDING_TO_BACKEND', payload: true });
         try {
-            // 获取当前网络信息
+            // Get current network information
             const currentNetwork = await web3Service.getCurrentNetwork();
             const networkConfig = NETWORK_CONFIGS[currentNetwork as keyof typeof NETWORK_CONFIGS];
             
-            // 获取目标网络信息（从选中的目标代币信息中获取）
+            // Get target network information (from selected target token information)
             const targetNetwork = targetToken.network;
             const targetNetworkConfig = NETWORK_CONFIGS[targetNetwork as keyof typeof NETWORK_CONFIGS];
             
-            // 获取源链和目标链的代币信息（从选中的代币信息中获取）
+            // Get source and target chain token information (from selected token information)
             const sourceTokenName = `'${sourceToken.symbol}'`;
             console.log('Source token symbol:', sourceToken.symbol);
             
             const targetTokenName = `'${targetToken.symbol}'`;
             console.log('Target token symbol:', targetToken.symbol);
             
-            // 获取源链和目标链的代币合约地址（从选中的代币信息中获取）
+            // Get source and target chain token contract addresses (from selected token information)
             const sourceContractAddress = sourceToken.address || "''";
             console.log('Source token contract address:', sourceContractAddress);
             
@@ -799,32 +1154,32 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             console.log('Target token contract address:', targetContractAddress);
             
             
-            // 构建新的数据格式
+            // Build new data format
             const requestData = {
                 sourceChainId: networkConfig ? parseInt(networkConfig.chainId, 16).toString() : '', 
                 sourceChain: `${currentNetwork}`, 
                 sourceRpc: networkConfig ? `${networkConfig.rpcUrls[0]}` : "", 
                 sourceFromAddress: data.fromAddress, 
-                sourceFromTokenName: sourceTokenName, // 动态获取源链代币符号
-                sourceFromTokenContractAddress: sourceContractAddress, // 获取源链合约地址
+                sourceFromTokenName: sourceTokenName, // Dynamically get source chain token symbol
+                sourceFromTokenContractAddress: sourceContractAddress, // Get source chain contract address
                 sourceFromAmount: data.amount, 
                 sourceFromHandingFee: data.fee || "", 
-                sourceFromRealAmount: data.amount, // 实际金额，可能需要减去手续费
+                sourceFromRealAmount: data.amount, // Actual amount, may need to subtract fees
                 sourceFromTxHash: data.sourceFromTxHash, 
                 sourceFromTxStatus: "pending", 
                 targetChainId: targetNetworkConfig ? parseInt(targetNetworkConfig.chainId, 16).toString() : '', 
                 targetChain: `${targetNetwork}`, 
                 targetRpc: targetNetworkConfig ? `${targetNetworkConfig.rpcUrls[0]}` : "", 
                 targetToAddress: data.toAddress, 
-                targetToTokenName: targetTokenName, // 动态获取目标链代币符号
-                targetToTokenContractAddress: targetContractAddress, // 获取目标链合约地址
-                targetToReceiveAmount: data.amount, // 接收金额，可能与发送金额不同
+                targetToTokenName: targetTokenName, // Dynamically get target chain token symbol
+                targetToTokenContractAddress: targetContractAddress, // Get target chain contract address
+                targetToReceiveAmount: data.amount, // Receive amount, may be different from send amount
                 targetToCallContractAddress: "", 
                 targetToGasStatus: "", 
                 targetToTxHash: "", 
                 targetToTxStatus: "pending", 
                 crossBridgeStatus: "pending",
-                walletAddress: state.walletAddress // 保留钱包地址用于身份识别
+                walletAddress: state.walletAddress // Keep wallet address for identity verification
             };
             
             console.log("Sending data to backend:", requestData);
@@ -859,7 +1214,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             console.error("Failed to send data to backend:", error);
             dispatch({ type: 'SET_BACKEND_RESPONSE', payload: "Failed to send data to backend: " + (error instanceof Error ? error.message : String(error)) });
             
-            // 显示错误状态
+            // Display error status
             dispatch({ 
                 type: 'SET_MINT_STATUS', 
                 payload: {
@@ -913,29 +1268,47 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 )}
             </div>
             
-            {/* 铸币状态模态弹窗 */}
+            {/* Mint Status Modal */}
             {state.showMintStatus && state.mintStatus && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
-                    {/* 毛玻璃背景 */}
+                    {/* Blur Background */}
                     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false })}></div>
-                    {/* 弹窗内容 */}
-                    <div className={`max-w-md w-full mx-4 p-6 rounded-xl shadow-xl z-50 ${state.mintStatus.success ? 'bg-white border-l-4 border-green-500' : 'bg-white border-l-4 border-yellow-500'}`}>
+                    {/* Modal Content */}
+                    <div className={`max-w-2xl w-full mx-4 p-6 rounded-xl shadow-xl z-50 ${state.mintStatus.success ? 'bg-white border-l-4 border-green-500' : 'bg-white border-l-4 border-yellow-500'}`}>
                         <div className="flex items-start">
                             <div className="flex-grow">
                                 <p className={`text-lg font-medium ${state.mintStatus.success ? 'text-green-700' : 'text-yellow-700'}`}>
                                     {state.mintStatus.message}
                                 </p>
-                                {state.mintStatus.targetToTxHash && (
+                                
+                                {/* Only show progress bars for bridge/burn operations, not for authorization */}
+                                {!state.mintStatus.message.includes('Authorization') && (
+                                    <div className="mt-6">
+                                        {sourceToken.symbol.startsWith('mao') ? (
+                                            <BurnProgressBar 
+                                                steps={state.burnSteps} 
+                                                currentStep={state.currentBurnStep} 
+                                            />
+                                        ) : (
+                                            <BridgeProgressBar 
+                                                steps={state.bridgeSteps} 
+                                                currentStep={state.currentStep} 
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {state.mintStatus.targetToTxHash && !state.mintStatus.message.includes('Authorization') && (
                                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                                         <p className="text-sm font-medium text-gray-700">Transaction Hash:</p>
-                                        <p className="text-sm font-mono mt-1" title={state.mintStatus.targetToTxHash}>
-                                            {formatTxHash(state.mintStatus.targetToTxHash)}
+                                        <p className="text-sm font-mono mt-1 break-all" title={state.mintStatus.targetToTxHash}>
+                                            {state.mintStatus.targetToTxHash}
                                         </p>
                                         <button 
                                             onClick={() => navigator.clipboard.writeText(state.mintStatus?.targetToTxHash || '')}
                                             className="text-xs text-blue-600 hover:text-blue-800 mt-1"
                                         >
-                                            Copy Full Hash
+                                            Copy Hash
                                         </button>
                                     </div>
                                 )}
@@ -959,13 +1332,15 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 </div>
             )}
             
-            {/* 确认对话框 */}
+            {/* Confirmation Dialog */}
             {state.showConfirmDialog && state.transactionDetails && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
-                    {/* 毛玻璃背景 */}
+                    {/* Frosted glass background */}
                     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={cancelBridgeTransaction}></div>
                     <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl z-50">
-                        <h2 className="text-xl font-bold mb-4">Confirm Lock Transaction</h2>
+                        <h2 className="text-xl font-bold mb-4">
+                            {sourceToken.symbol.startsWith('mao') ? 'Confirm Burn Transaction' : 'Confirm Lock Transaction'}
+                        </h2>
                         <div className="mb-4">
                             <p className="mb-2"><span className="font-semibold">Network:</span> {state.transactionDetails.currentNetwork}</p>
                             <p className="mb-2">

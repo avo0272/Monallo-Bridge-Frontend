@@ -1,42 +1,42 @@
 import axios from 'axios';
 import { NumberMul } from '../utils/numberUtils';
 
-// 定义代币价格接口
+// Define token price interface
 interface TokenPrice {
   symbol: string;
   price: number;
   lastUpdated: number;
 }
 
-// 缓存时间（毫秒）
+// Cache duration (milliseconds)
 const CACHE_DURATION = 5000; // 5s
 
-// 价格缓存
+// Price cache
 const priceCache: Record<string, TokenPrice> = {};
 
-// 代币价格服务
+// Token price service
 class PriceService {
-  // 获取ETH价格
+  // Get ETH price
   async getETHPrice(): Promise<number> {
     return this.getTokenPrice('ETH');
   }
 
-  // 获取USDC价格
+  // Get USDC price
   async getUSDCPrice(): Promise<number> {
     return this.getTokenPrice('USDC');
   }
 
-  // 获取EURC价格
+  // Get EURC price
   async getEURCPrice(): Promise<number> {
     return this.getTokenPrice('EURC');
   }
 
-  // 根据代币符号获取价格
+  // Get price by token symbol
   async getTokenPrice(symbol: string): Promise<number> {
-    // 标准化符号
+    // Normalize symbol
     const normalizedSymbol = this.normalizeSymbol(symbol);
     
-    // 检查缓存
+    // Check cache
     if (this.isCacheValid(normalizedSymbol)) {
       return priceCache[normalizedSymbol].price;
     }
@@ -44,7 +44,7 @@ class PriceService {
     try {
       const price = await this.fetchTokenPrice(normalizedSymbol);
       
-      // 更新缓存
+      // Update cache
       priceCache[normalizedSymbol] = {
         symbol: normalizedSymbol,
         price,
@@ -53,8 +53,8 @@ class PriceService {
       
       return price;
     } catch (error) {
-      console.error(`获取${symbol}价格失败:`, error);
-      // 如果有缓存，即使过期也返回
+      console.error(`Failed to get ${symbol} price:`, error);
+      // If cache exists, return it even if expired
       if (priceCache[normalizedSymbol]) {
         return priceCache[normalizedSymbol].price;
       }
@@ -62,7 +62,7 @@ class PriceService {
     }
   }
 
-  // 检查缓存是否有效
+  // Check if cache is valid
   private isCacheValid(symbol: string): boolean {
     if (!priceCache[symbol]) return false;
     
@@ -72,16 +72,16 @@ class PriceService {
     return (now - lastUpdated) < CACHE_DURATION;
   }
 
-  // 标准化代币符号
+  // Normalize token symbol
   private normalizeSymbol(symbol: string): string {
-    // 移除'mao'前缀
+    // Remove 'mao' prefix
     if (symbol.startsWith('mao')) {
       return symbol.substring(3);
     }
     return symbol;
   }
 
-  // 从OKX API获取代币价格
+  // Get token price from OKX API
   private async fetchTokenPrice(symbol: string): Promise<number> {
     let endpoint = '';
     
@@ -96,21 +96,21 @@ class PriceService {
         endpoint = 'https://www.okx.com/api/v5/market/ticker?instId=EURC-USD';
         break;
       default:
-        throw new Error(`不支持的代币: ${symbol}`);
+        throw new Error(`Unsupported token: ${symbol}`);
     }
     
     const response = await axios.get(endpoint);
     
     if (response.data && response.data.data && response.data.data.length > 0) {
-      // OKX API返回的价格在last字段
+      // OKX API returns price in the last field
       const price = parseFloat(response.data.data[0].last);
       return price;
     }
     
-    throw new Error(`无法获取${symbol}价格`);
+    throw new Error(`Unable to get ${symbol} price`);
   }
 
-  // 计算总价值（代币数量 * 价格）
+  // Calculate total value (token amount * price)
   async calculateTotalValue(symbol: string, amount: number): Promise<number> {
     if (!amount || isNaN(amount) || amount <= 0) return 0;
     
@@ -119,7 +119,7 @@ class PriceService {
   }
 }
 
-// 创建单例实例
+// Create singleton instance
 const priceService = new PriceService();
 
 export default priceService;
