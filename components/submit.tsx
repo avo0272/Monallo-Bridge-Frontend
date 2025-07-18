@@ -5,6 +5,7 @@ import web3Service from "../services/web3Service";
 import axios from "axios";
 import { useWebSocket } from "../hook/useWebSocket";
 import { NETWORK_CONFIGS } from "../services/web3Service";
+import Web3 from "web3";
 import { 
     formatTokenAmount, 
     parseTokenAmount, 
@@ -208,7 +209,7 @@ function reducer(state: State, action: Action): State {
 export default function Submit({ onConnectWallet, receiverAddress, amount, selectedToken1, selectedToken2 }: SubmitProps) {
     // 设置默认的代币信息
     const defaultToken1: Token = { symbol: "ETH", network: "Ethereum-Sepolia", address: "" };
-    const defaultToken2: Token = { symbol: "maoETH", network: "Imua-Testnet", address: "0x21717FD336Db40Af910603f8a8b4aA202736C4Ec" };
+    const defaultToken2: Token = { symbol: "maoETH", network: "Imua-Testnet", address: "0x06fF2cfbAAFDfcFbd4604B98C8a343dfa693476e" };
     
     // 使用传入的代币信息或默认值
     const sourceToken = selectedToken1 || defaultToken1;
@@ -372,7 +373,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 await checkAuthorization();
             }, 3000);
             
-            alert('Authorization successful! Please wait for transaction confirmation.');
+            // 显示授权成功弹窗
+            dispatch({ 
+                type: 'SET_MINT_STATUS', 
+                payload: {
+                    success: true,
+                    message: 'Authorization successful! Please wait for transaction confirmation.',
+                    targetToTxHash: txHash
+                }
+            });
+            dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: true });
             
         } catch (error) {
             console.error('Authorization failed:', error);
@@ -593,17 +603,52 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 }
                 
                 // 格式化数量进行比较
+                // 确保使用相同的格式进行比较
+                // 如果currentAllowance是wei格式，则将value也转换为wei格式
                 const formattedValue = parseTokenAmount(value, tokenDecimals);
+                // 将wei格式的值转换为以太单位，用于后续比较
+                // 使用Web3实例直接从tokenUtils中获取，避免依赖web3Service.web3
+                const web3 = new Web3();
+                const formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
                 
                 // 使用工具函数检查授权和余额
-                if (!hasSufficientAllowance(currentAllowance, formattedValue)) {
+                console.log("授权比较:", "当前授权(原始值):", currentAllowance, "需要金额(原始值):", formattedValue);
+                console.log("授权比较:", "当前授权(格式化):", formatTokenAmount(currentAllowance, tokenDecimals), "需要金额(格式化):", formatTokenAmount(formattedValue, tokenDecimals));
+                
+                // 确保使用正确的格式比较
+                // currentAllowance是以太单位（从checkAllowance返回），需要与formattedValueInEther（也是以太单位）比较
+                console.log("统一单位后比较:", "当前授权(以太单位):", currentAllowance, "需要金额(以太单位):", formattedValueInEther);
+                
+                const hasAllowance = hasSufficientAllowance(currentAllowance, formattedValueInEther);
+                console.log("授权是否足够:", hasAllowance);
+                
+                if (!hasAllowance) {
+                    // 确保使用正确的格式化方法
+                    // currentAllowance和formattedValueInEther都是以太单位，直接格式化
                     const displayAllowance = formatTokenAmount(currentAllowance, tokenDecimals);
-                    throw new Error(`授权额度不足，当前授权: ${displayAllowance} ${tokenSymbol}，需要: ${value} ${tokenSymbol}`);
+                    const displayValue = formatTokenAmount(formattedValueInEther, tokenDecimals);
+                    console.log(`错误消息中的值: 当前授权=${displayAllowance}, 需要=${displayValue}`);
+                    throw new Error(`授权额度不足，当前授权: ${displayAllowance} ${tokenSymbol}，需要: ${displayValue} ${tokenSymbol}`);
                 }
                 
-                if (!hasSufficientBalance(tokenBalance, formattedValue)) {
+                // 检查余额是否足够
+                console.log("余额比较:", "当前余额(原始值):", tokenBalance, "需要金额(原始值):", formattedValue);
+                console.log("余额比较:", "当前余额(格式化):", formatTokenAmount(tokenBalance, tokenDecimals), "需要金额(格式化):", formatTokenAmount(formattedValue, tokenDecimals));
+                
+                // 确保使用相同的单位进行比较
+                // tokenBalance是以太单位（从getTokenBalance返回），需要与formattedValueInEther比较
+                console.log("统一单位后比较:", "当前余额(以太单位):", tokenBalance, "需要金额(以太单位):", formattedValueInEther);
+                
+                const hasBalance = hasSufficientBalance(tokenBalance, formattedValueInEther);
+                console.log("余额是否足够:", hasBalance);
+                
+                if (!hasBalance) {
+                    // 确保使用正确的格式化方法
+                    // tokenBalance和formattedValueInEther都是以太单位，直接格式化
                     const displayBalance = formatTokenAmount(tokenBalance, tokenDecimals);
-                    throw new Error(`代币余额不足，当前余额: ${displayBalance} ${tokenSymbol}，需要: ${value} ${tokenSymbol}`);
+                    const displayValue = formatTokenAmount(formattedValueInEther, tokenDecimals);
+                    console.log(`错误消息中的值: 当前余额=${displayBalance}, 需要=${displayValue}`);
+                    throw new Error(`代币余额不足，当前余额: ${displayBalance} ${tokenSymbol}，需要: ${displayValue} ${tokenSymbol}`);
                 }
                 
                 dispatch({ 
@@ -757,8 +802,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             // 构建新的数据格式
             const requestData = {
                 sourceChainId: networkConfig ? parseInt(networkConfig.chainId, 16).toString() : '', 
-                sourceChain: `'${currentNetwork}'`, 
-                sourceRpc: networkConfig ? `'${networkConfig.rpcUrls[0]}'` : "''", 
+                sourceChain: `${currentNetwork}`, 
+                sourceRpc: networkConfig ? `${networkConfig.rpcUrls[0]}` : "", 
                 sourceFromAddress: data.fromAddress, 
                 sourceFromTokenName: sourceTokenName, // 动态获取源链代币符号
                 sourceFromTokenContractAddress: sourceContractAddress, // 获取源链合约地址
@@ -766,19 +811,19 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 sourceFromHandingFee: data.fee || "", 
                 sourceFromRealAmount: data.amount, // 实际金额，可能需要减去手续费
                 sourceFromTxHash: data.sourceFromTxHash, 
-                sourceFromTxStatus: "'pending'", 
+                sourceFromTxStatus: "pending", 
                 targetChainId: targetNetworkConfig ? parseInt(targetNetworkConfig.chainId, 16).toString() : '', 
-                targetChain: `'${targetNetwork}'`, 
-                targetRpc: targetNetworkConfig ? `'${targetNetworkConfig.rpcUrls[0]}'` : "''", 
+                targetChain: `${targetNetwork}`, 
+                targetRpc: targetNetworkConfig ? `${targetNetworkConfig.rpcUrls[0]}` : "", 
                 targetToAddress: data.toAddress, 
                 targetToTokenName: targetTokenName, // 动态获取目标链代币符号
                 targetToTokenContractAddress: targetContractAddress, // 获取目标链合约地址
                 targetToReceiveAmount: data.amount, // 接收金额，可能与发送金额不同
-                targetToCallContractAddress: "''", 
-                targetToGasStatus: "''", 
-                targetToTxHash: "''", 
-                targetToTxStatus: "'pending'", 
-                crossBridgeStatus: "'pending'",
+                targetToCallContractAddress: "", 
+                targetToGasStatus: "", 
+                targetToTxHash: "", 
+                targetToTxStatus: "pending", 
+                crossBridgeStatus: "pending",
                 walletAddress: state.walletAddress // 保留钱包地址用于身份识别
             };
             
