@@ -8,9 +8,9 @@ export const API_ENDPOINTS = {
   // 生产环境
   PRODUCTION: {
     CROSS_LOCK_INFO: 'https://uatbridge.monallo.ai/lockinfo/api/crossLockInfo',
-    ADD_AUTHORIZATION: 'https://uatbridge.monallo.ai/api/addAuthorization',
-    GET_AMOUNT: 'https://uatbridge.monallo.ai/api/getAmount',
-    LOCK_INFO: 'https://uatbridge.monallo.ai/api/lockInfo'
+    ADD_AUTHORIZATION: 'https://uatbridge.monallo.ai/lockinfo/api/addAuthorization',
+    GET_AMOUNT: 'https://uatbridge.monallo.ai/lockinfo/api/getAmount',
+    LOCK_INFO: 'https://uatbridge.monallo.ai/lockinfo/api/lockInfo'
   },
   // 开发环境
   DEVELOPMENT: {
