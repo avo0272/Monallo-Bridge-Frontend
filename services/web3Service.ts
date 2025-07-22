@@ -27,7 +27,7 @@ export const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
     blockExplorerUrls: ['https://sepolia.etherscan.io'],
   },
   'Imua-Testnet': {
-    chainId: '0xe9', // 8081
+    chainId: '0xe9', // 233
     chainName: 'Imuachain Testnet',
     nativeCurrency: {
       name: 'IMUA',
@@ -47,6 +47,17 @@ export const NETWORK_CONFIGS: { [key: string]: NetworkConfig } = {
     },
     rpcUrls: ['https://zetachain-athens-evm.blockpi.network/v1/rpc/public'],
     blockExplorerUrls: ['https://zetachain-testnet.blockscout.com/'],
+  },
+  'PlatON-Mainnet': {
+    chainId: '0x335f9', // 210425
+    chainName: 'PlatON Mainnet',
+    nativeCurrency: {
+      name: 'LAT',
+      symbol: 'LAT',
+      decimals: 18,
+    },
+    rpcUrls: ['https://openapi2.platon.network/rpc'],
+    blockExplorerUrls: ['https://scan.platon.network/'],
   },
 };
 
