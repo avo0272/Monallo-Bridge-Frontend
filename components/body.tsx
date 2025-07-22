@@ -26,7 +26,7 @@ export default function Body() {
     const [showSelect1, setShowSelect1] = useState(false) // 控制 Select1 显示的状态
     const [selectedToken1, setSelectedToken1] = useState<{ symbol: string; network: string; address: string }>({ symbol: "ETH", network: "Ethereum-Sepolia", address: "" })
     const [showSelect2, setShowSelect2] = useState(false) // 控制 Select2 显示的状态
-    const [selectedToken2, setSelectedToken2] = useState<{ symbol: string; network: string; address: string }>({ symbol: "maoETH", network: "Imua-Testnet", address: "0x06fF2cfbAAFDfcFbd4604B98C8a343dfa693476e" })
+    const [selectedToken2, setSelectedToken2] = useState<{ symbol: string; network: string; address: string }>({ symbol: "maoETH", network: "Imua-Testnet", address: "0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05" })
     const [walletAddress, setWalletAddress] = useState("") // 钱包地址
     const [token1Balance, setToken1Balance] = useState("") // Token1余额
     const [token2Balance, setToken2Balance] = useState("") // Token2余额
@@ -45,6 +45,8 @@ export default function Body() {
         "maoEURC": ["EURC", "maoEURC"],
         "IMUA": ["IMUA", "maoIMUA"],
         "ZETA": ["ZETA", "maoZETA"],
+        "LAT": ["LAT", "maoLAT"],
+        "maoLAT": ["LAT", "maoLAT"],
     };
     
     // 检查两个代币是否属于同一类型

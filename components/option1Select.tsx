@@ -9,7 +9,7 @@ type Token = {
   address: string;
 };
 
-type NetworkKey = 'Ethereum-Sepolia' | 'Imua-Testnet' | 'ZetaChain-Testnet';
+type NetworkKey = 'Ethereum-Sepolia' | 'Imua-Testnet' | 'ZetaChain-Testnet' | 'PlatON-Mainnet';
 interface Option1SelectProps {
   onTokenSelect: (token: Token) => void
   showSelect: (v: boolean) => void
@@ -26,6 +26,7 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
     { name: "ETH", icon: "/ethereum.png", network: "Ethereum-Sepolia" },
     { name: "Imua", icon: "/imua.png", network: "Imua-Testnet" },
     { name: "ZETA", icon: "/zeta.png", network: "ZetaChain-Testnet" },
+    { name: "LAT", icon: "/platon.png", network: "PlatON-Mainnet" },
   ];
   
   // 过滤掉与toNetwork相同的网络
@@ -42,21 +43,31 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
       { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
       { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
       { symbol: "maoIMUA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
-      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"}
+      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
+      { symbol: "maoUSDC", network: "Ethereum-Sepolia", address: "0xmaoUSDCOnSepolia..." },
+      { symbol: "maoEURC", network: "Ethereum-Sepolia", address: "0xmaoEURCOnSepolia..." },
+      { symbol: "maoLAT", network: "Ethereum-Sepolia", address: "0xmaoLATOnSepolia..." }
     ],
     "Imua-Testnet": [
       { symbol: "IMUA", network: "Imua-Testnet", address: "" },
-      { symbol: "maoETH", network: "Imua-Testnet", address: "0x06fF2cfbAAFDfcFbd4604B98C8a343dfa693476e" },
-      { symbol: "maoUSDC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoEURC", network: "Imua-Testnet", address: "" },
-      { symbol: "maoZETA", network: "Imua-Testnet", address: ""}
+      { symbol: "maoETH", network: "Imua-Testnet", address: "0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05" },
+      { symbol: "maoUSDC", network: "Imua-Testnet", address: "0xa7752d84e8ab6cda80d07c4df7b1ef3919f49ce8" },
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5" },
+      { symbol: "maoZETA", network: "Imua-Testnet", address: "0xD34F03fE714C2DbfDAC4fDcbEAe9d0d72c8031D5"},
+      { symbol: "maoLAT", network: "Imua-Testnet", address: "0x75891AA11AC45ab150e81AE744728d11C72c472B" }
     ],
     "ZetaChain-Testnet": [
       { symbol: "ZETA", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoIMUA", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
       { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" }
+      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" },
+      { symbol: "maoLAT", network: "ZetaChain-Testnet", address: "0xmaoLATOnZeta..." }
+    ],
+    "PlatON-Mainnet": [
+      { symbol: "LAT", network: "PlatON-Mainnet", address: "" },
+      { symbol: "USDC", network: "PlatON-Mainnet", address: "0xUSDCOnPlatON..." },
+      { symbol: "maoUSDC", network: "PlatON-Mainnet", address: "0xmaoUSDCOnPlatON..." }
     ],
   };
 

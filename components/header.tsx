@@ -198,7 +198,7 @@ export default function Header() {
               MonalloScan
             </a>
             <a
-              href="#"
+              href="https://uatbridge.monallo.ai/"
               className="flex items-center text-sm relative"
             >
               <Image src="/bridge.png" alt="Blockchain Icon" width={15} height={15} className="mr-1" />
