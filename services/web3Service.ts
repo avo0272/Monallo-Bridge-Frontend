@@ -103,8 +103,24 @@ class Web3Service {
 
   // Initialize Web3
   private initializeWeb3() {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      this._web3 = new Web3(window.ethereum);
+    if (typeof window !== 'undefined') {
+      // 优先使用MetaMask
+      if (window.ethereum) {
+        this._web3 = new Web3(window.ethereum);
+        console.log('Web3 initialized with MetaMask provider');
+      } 
+      // 尝试使用OKX钱包
+      else if (window.okxwallet) {
+        this._web3 = new Web3(window.okxwallet);
+        console.log('Web3 initialized with OKX wallet provider');
+      }
+      // 如果没有可用的钱包，使用默认RPC
+      else {
+        // 使用默认的Ethereum Sepolia RPC作为后备
+        const defaultRpcUrl = 'https://eth-sepolia.api.onfinality.io/public';
+        this._web3 = new Web3(new Web3.providers.HttpProvider(defaultRpcUrl));
+        console.log('Web3 initialized with default HTTP provider');
+      }
     }
   }
 
@@ -142,8 +158,15 @@ class Web3Service {
 
   // 获取当前网络
   async getCurrentNetwork(): Promise<string> {
+    // 确保Web3已初始化
     if (!this._web3) {
-      throw new Error('Web3 未初始化');
+      this.initializeWeb3();
+      
+      // 如果仍然未初始化，返回默认网络
+      if (!this._web3) {
+        console.warn('Web3无法初始化，返回默认网络');
+        return 'Ethereum-Sepolia';
+      }
     }
 
     try {
@@ -154,14 +177,22 @@ class Web3Service {
       return networkName;
     } catch (error) {
       console.error('获取当前网络失败:', error);
-      return 'Unknown Network';
+      // 出错时返回默认网络而不是Unknown Network
+      return 'Ethereum-Sepolia';
     }
   }
 
   // 获取当前链ID
   async getCurrentChainId(): Promise<string> {
+    // 确保Web3已初始化
     if (!this._web3) {
-      throw new Error('Web3 未初始化');
+      this.initializeWeb3();
+      
+      // 如果仍然未初始化，返回默认链ID (Ethereum Sepolia)
+      if (!this._web3) {
+        console.warn('Web3无法初始化，返回默认链ID');
+        return '11155111'; // Ethereum Sepolia的链ID
+      }
     }
 
     try {
@@ -169,7 +200,8 @@ class Web3Service {
       return chainId.toString();
     } catch (error) {
       console.error('获取当前链ID失败:', error);
-      throw error;
+      // 出错时返回默认链ID而不是抛出错误
+      return '11155111'; // Ethereum Sepolia的链ID
     }
   }
 

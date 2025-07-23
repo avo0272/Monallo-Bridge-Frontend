@@ -26,7 +26,7 @@ export default function Body() {
     const [showSelect1, setShowSelect1] = useState(false) // 控制 Select1 显示的状态
     const [selectedToken1, setSelectedToken1] = useState<{ symbol: string; network: string; address: string }>({ symbol: "ETH", network: "Ethereum-Sepolia", address: "" })
     const [showSelect2, setShowSelect2] = useState(false) // 控制 Select2 显示的状态
-    const [selectedToken2, setSelectedToken2] = useState<{ symbol: string; network: string; address: string }>({ symbol: "maoETH", network: "Imua-Testnet", address: "0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05" })
+    const [selectedToken2, setSelectedToken2] = useState<{ symbol: string; network: string; address: string }>({ symbol: "maoETH", network: "Imua-Testnet", address: "0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9" })
     const [walletAddress, setWalletAddress] = useState("") // 钱包地址
     const [token1Balance, setToken1Balance] = useState("") // Token1余额
     const [token2Balance, setToken2Balance] = useState("") // Token2余额
@@ -248,6 +248,38 @@ export default function Body() {
         
         updatePrice();
     }, [amount, selectedToken1.symbol]);
+    
+    // 监听updateFromToken事件，用于更新IMUA链上的maoUSDC地址
+    useEffect(() => {
+        // 处理updateFromToken事件
+        const handleUpdateFromToken = (event: CustomEvent) => {
+            try {
+                const updatedToken = event.detail;
+                console.log("Received updateFromToken event with token:", updatedToken);
+                
+                // 检查是否是IMUA链上的maoUSDC
+                if (updatedToken && updatedToken.network === 'Imua-Testnet' && updatedToken.symbol === 'maoUSDC') {
+                    console.log(`Updating maoUSDC address from ${selectedToken1.address} to ${updatedToken.address}`);
+                    setSelectedToken1(updatedToken);
+                    console.log("selectedToken1 has been updated to:", updatedToken);
+                } else {
+                    console.log("Received token is not maoUSDC on IMUA or has invalid format");
+                }
+            } catch (error) {
+                console.error("Error handling updateFromToken event:", error);
+            }
+        };
+        
+        // 添加事件监听器
+        document.addEventListener('updateFromToken', handleUpdateFromToken as EventListener);
+        console.log("Added updateFromToken event listener");
+        
+        // 清理函数
+        return () => {
+            document.removeEventListener('updateFromToken', handleUpdateFromToken as EventListener);
+            console.log("Removed updateFromToken event listener");
+        };
+    }, []); // 移除selectedToken1依赖，避免重复添加监听器
 
     // 移除获取Token2余额的代码，因为不需要获取Token2的余额
 

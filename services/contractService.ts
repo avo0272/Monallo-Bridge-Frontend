@@ -1394,16 +1394,16 @@ const CONTRACT_ADDRESSES = {
   // 锁币合约地址 (Source.sol)
   LOCK_CONTRACTS: {
     'Ethereum-Sepolia': '0x4195868b54b70d4420E6203e85A4b92a6705FF28', // Sepolia上的Source合约地址
-    'PlatON-Mainnet': '0x59def95E745b5F87146021FB2D3D6C857667F519', // PlatON上的Source合约地址
-    'Imua-Testnet': '0x5652A9FC9752E3D7937206d00740500F3878d952', // Imua上的Source合约地址
-    'ZetaChain-Testnet': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // ZetaChain上的Source合约地址
+    'PlatON-Mainnet': '0x2fd92027B1afB80613B5720Df1015D41873F8d7C', // PlatON上的Source合约地址
+    'Imua-Testnet': '0xfcc4936B0b437469F5CE4C3cBD7eAa05CE5f581d', // Imua上的Source合约地址
+    'ZetaChain-Testnet': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // ZetaChain上的Source合约地址
   },
   // 销毁合约地址 (Target.sol) - 用于销毁代币跨链解锁回原链
   BURN_CONTRACTS: {
     // 在Sepolia上销毁maoETH需要使用Sepolia上的Target合约
-    'Ethereum-Sepolia': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // Sepolia上的Target合约地址
+    'Ethereum-Sepolia': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // Sepolia上的Target合约地址
     // 在Imua上销毁maoETH需要使用Imua上的Target合约
-    'Imua-Testnet': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // Imua上的Target合约地址
+    'Imua-Testnet': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // Imua上的Target合约地址
     // 在ZetaChain上销毁maoETH需要使用ZetaChain上的Target合约
     'ZetaChain-Testnet': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // ZetaChain上的Target合约地址
     // 在PlatON上销毁maoETH需要使用PlatON上的Target合约
@@ -1413,8 +1413,8 @@ const CONTRACT_ADDRESSES = {
   TARGET_CONTRACTS: {
     // imua链上targets
     'target_210425': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // PlatON网络的目标合约地址
-    'target_11155111': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // Sepolia网络的目标合约地址
-    'target_7001': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // Imua网络的目标合约地址
+    'target_11155111': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // Sepolia网络的目标合约地址
+    'target_7001': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // Imua网络的目标合约地址
     // sepolia链上targets
     'sepolia_target_210425': '0x4195868b54b70d4420E6203e85A4b92a6705FF28', // sepolia上PlatON的目标合约地址
     'sepolia_target_7001': '0x5652A9FC9752E3D7937206d00740500F3878d952', // sepolia上Imua的目标合约地址
@@ -1429,35 +1429,38 @@ const CONTRACT_ADDRESSES = {
   TOKEN_CONTRACTS: {
     'Ethereum-Sepolia': {
       'ETH': '', // 原生代币
-      'maoUSDC': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // maoUSDC代币地址
-      'maoEURC': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // maoEURC代币地址
-      'maoLAT': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05' // maoLAT代币地址
+      'USDC': '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // USDC代币地址
+      'EURC': '0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4', // EURC代币地址
+      'maoIMUA': '0x12306381b1b6ecb4132ff4ce324ed2be3728e865', // maoIMUA代币地址
+      'maoZETA': '0x13864cc6Ac76F4109254D6C2ED90807a2904563A', // maoZETA代币地址
+      'maoUSDC': '0x7562c0d1ee790aed045839aee88d2e29fdf010d2', // maoUSDC代币地址
+      'maoLAT': '0x1afd2d6f77b125b2b18c471f7ba95b009a039ba8' // maoLAT代币地址
     },
     'Imua-Testnet': {
       'IMUA': '', // 原生代币
-      'maoETH': '0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05', // maoETH代币地址
-      'maoLAT': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // maoLAT代币地址
-      'maoZETA': '0xD34F03fE714C2DbfDAC4fDcbEAe9d0d72c8031D5', // maoZETA代币地址
-      'maoEURC': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // maoEURC代币地址
+      'maoETH': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // maoETH代币地址
+      'maoLAT': '0x924A9fb56b2b1B5554327823b201b7eEF691E524', // maoLAT代币地址
+      'maoZETA': '0xFCE1AC30062EfDD9119F6527392D4B935397f714', // maoZETA代币地址
+      'maoEURC': '0xDFEc8F8C99eC22AA21e392Aa00eFb3F517C44987', // maoEURC代币地址
       'maoUSDC': { // 根据目标网络不同使用不同的合约地址
-        'PlatON': '0xa7752d84e8ab6cda80d07c4df7b1ef3919f49ce8', // 当TO选择的网络为PlatON时
-        'Ethereum-Sepolia': '0x801face2041139f65facda17784ce72f43db2b3c' // 当TO选择的网络为Ethereum-Sepolia时
+        'PlatON': '0x4ed64b15ab26b8fe3905b4101beccc1d5b3d49fd', // 当TO选择的网络为PlatON时
+        'Ethereum-Sepolia': '0xe5a26a2c90b6e629861bb25f10177f06720e5335' // 当TO选择的网络为Ethereum-Sepolia时
       }
     },
     'ZetaChain-Testnet': {
       'ZETA': '', // 原生代币
-      'maoETH': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // maoETH代币地址
-      'maoUSDC': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // maoUSDC代币地址
-      'maoLAT': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5', // maoLAT代币地址
-      'maoEURC': '0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5'
+      'maoIMUA': '0x644b4d44ee3b1afd5370b6e541d55edf5e6f2120', // maoIMUA代币地址
+      'maoETH': '0x3d4097f44b2765722c4ed315f14ad4b5f718136e', // maoETH代币地址
+      'maoUSDC': '0xABc28D728bbEF3159e8ab7dbB036125669B0cc64', // maoUSDC代币地址 (platon bridge zeta)
+      'maoEURC': '0x0ca5d56c30c5711B9AFFA6B4DB17367a987E234e', // maoEURC代币地址 (sepolia bridge zeta)
+      'maoLAT': '0x8967CEc2393082878d54A9906Cc1d7163292fB6C' // maoLAT代币地址
     },
     'PlatON-Mainnet': {
       'LAT': '', // 原生代币
-      'USDC': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // USDC代币地址
-      'maoUSDC': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // maoUSDC代币地址
-      'maoETH': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // maoETH代币地址
-      'maoEURC': '0x75891AA11AC45ab150e81AE744728d11C72c472B', // maoEURC代币地址
-      'maoZETA': '0x75891AA11AC45ab150e81AE744728d11C72c472B'
+      'USDC': '0xdA396A3C7FC762643f658B47228CD51De6cE936d', // USDC代币地址
+      'maoUSDC': '0x2E715D00Cd58a048077640Ca1d3aB5CdaB181f0c', // maoUSDC代币地址
+      'maoETH': '0xE9B5Ee5E5cE9DcDc0E5cE9DcDc0E5cE9DcDc0E5cE9D', // maoETH代币地址
+      'maoEURC': '0x644B4d44EE3b1afD5370b6E541d55Edf5E6F2120' // maoEURC代币地址
     }
   }
 };
@@ -1991,4 +1994,6 @@ class ContractService {
 // 创建单例实例
 const contractService = new ContractService();
 
+// 导出CONTRACT_ADDRESSES常量和contractService单例
+export { CONTRACT_ADDRESSES };
 export default contractService;
