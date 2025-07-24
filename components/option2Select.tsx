@@ -1,6 +1,8 @@
 "use client"
 import { useState } from "react";
 import { getExplorerUrl } from "../utils/explorerUtils";
+import contractService from "../services/contractService";
+import { CONTRACT_ADDRESSES } from "../services/contractService";
 
 type Token = {
   symbol: string;
@@ -41,32 +43,33 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
       { symbol: "ETH", network: "Ethereum-Sepolia", address: "" },
       { symbol: "USDC", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
       { symbol: "EURC", network: "Ethereum-Sepolia", address: "0x08210f9170f89ab7658f0b5e3ff39b0e03c594d4" },
-      { symbol: "maoIMUA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
-      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"},
-      { symbol: "maoUSDC", network: "Ethereum-Sepolia", address: "0xmaoUSDCOnSepolia..." },
-      { symbol: "maoEURC", network: "Ethereum-Sepolia", address: "0xmaoEURCOnSepolia..." },
-      { symbol: "maoLAT", network: "Ethereum-Sepolia", address: "0xmaoLATOnSepolia..." }
+      { symbol: "maoIMUA", network: "Ethereum-Sepolia", address: "0x12306381b1b6ecb4132ff4ce324ed2be3728e865"},
+      { symbol: "maoZETA", network: "Ethereum-Sepolia", address: "0x13864cc6Ac76F4109254D6C2ED90807a2904563A"},
+      { symbol: "maoUSDC", network: "Ethereum-Sepolia", address: "0x7562c0d1ee790aed045839aee88d2e29fdf010d2" },
+      { symbol: "maoLAT", network: "Ethereum-Sepolia", address: "0x1afd2d6f77b125b2b18c471f7ba95b009a039ba8" }
     ],
     "Imua-Testnet": [
       { symbol: "IMUA", network: "Imua-Testnet", address: "" },
-      { symbol: "maoETH", network: "Imua-Testnet", address: "0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05" },
-      { symbol: "maoUSDC", network: "Imua-Testnet", address: "0xa7752d84e8ab6cda80d07c4df7b1ef3919f49ce8" },
-      { symbol: "maoEURC", network: "Imua-Testnet", address: "0xD34F03fE714C2DbfDAC4fDCbEAe9d0d72c8031D5" },
-      { symbol: "maoZETA", network: "Imua-Testnet", address: "0xD34F03fE714C2DbfDAC4fDcbEAe9d0d72c8031D5"},
-      { symbol: "maoLAT", network: "Imua-Testnet", address: "0x75891AA11AC45ab150e81AE744728d11C72c472B" }
+      { symbol: "maoETH", network: "Imua-Testnet", address: "0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9" },
+      { symbol: "maoUSDC", network: "Imua-Testnet", address: "0x4ed64b15ab26b8fe3905b4101beccc1d5b3d49fd" },
+      { symbol: "maoEURC", network: "Imua-Testnet", address: "0xDFEc8F8C99eC22AA21e392Aa00eFb3F517C44987" },
+      { symbol: "maoZETA", network: "Imua-Testnet", address: "0xFCE1AC30062EfDD9119F6527392D4B935397f714"},
+      { symbol: "maoLAT", network: "Imua-Testnet", address: "0x924A9fb56b2b1B5554327823b201b7eEF691E524" }
     ],
     "ZetaChain-Testnet": [
       { symbol: "ZETA", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoIMUA", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoETH", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "" },
-      { symbol: "maoLAT", network: "ZetaChain-Testnet", address: "0xmaoLATOnZeta..." }
+      { symbol: "maoIMUA", network: "ZetaChain-Testnet", address: "0x644b4d44ee3b1afd5370b6e541d55edf5e6f2120" },
+      { symbol: "maoETH", network: "ZetaChain-Testnet", address: "0x3d4097f44b2765722c4ed315f14ad4b5f718136e" },
+      { symbol: "maoUSDC", network: "ZetaChain-Testnet", address: "0xABc28D728bbEF3159e8ab7dbB036125669B0cc64" },
+      { symbol: "maoEURC", network: "ZetaChain-Testnet", address: "0x0ca5d56c30c5711B9AFFA6B4DB17367a987E234e" },
+      { symbol: "maoLAT", network: "ZetaChain-Testnet", address: "0x8967CEc2393082878d54A9906Cc1d7163292fB6C" }
     ],
     "PlatON-Mainnet": [
       { symbol: "LAT", network: "PlatON-Mainnet", address: "" },
-      { symbol: "USDC", network: "PlatON-Mainnet", address: "0xUSDCOnPlatON..." },
-      { symbol: "maoUSDC", network: "PlatON-Mainnet", address: "0xmaoUSDCOnPlatON..." }
+      { symbol: "USDC", network: "PlatON-Mainnet", address: "0xdA396A3C7FC762643f658B47228CD51De6cE936d" },
+      { symbol: "maoUSDC", network: "PlatON-Mainnet", address: "0x2E715D00Cd58a048077640Ca1d3aB5CdaB181f0c" },
+      { symbol: "maoETH", network: "PlatON-Mainnet", address: "0xE9B5Ee5E5cE9DcDc0E5cE9DcDc0E5cE9DcDc0E5cE9D" },
+      { symbol: "maoEURC", network: "PlatON-Mainnet", address: "0x644B4d44EE3b1afD5370b6E541d55Edf5E6F2120"}
     ],
   };
 
@@ -89,13 +92,75 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
       });
 
   const handleTokenClick = (token: Token) => {
-    console.log(token);
+    console.log("Selected target token:", token);
     
     // 检查钱包是否已连接
     if (!walletConnected) {
       alert("Please connect your wallet first.");
       showSelect(false);
       return;
+    }
+    
+    // 检查是否需要更新From网络中IMUA链上的maoUSDC地址
+    if (fromToken && fromToken.network === 'Imua-Testnet' && fromToken.symbol === 'maoUSDC') {
+      console.log("From token is maoUSDC on IMUA, checking if address needs update based on target network:", token.network);
+      
+      // 获取正确的maoUSDC地址
+      const tokenContracts = CONTRACT_ADDRESSES.TOKEN_CONTRACTS['Imua-Testnet'];
+      if (tokenContracts && tokenContracts.maoUSDC && typeof tokenContracts.maoUSDC === 'object') {
+        console.log('Found maoUSDC token contracts configuration:', tokenContracts.maoUSDC);
+        let updatedAddress = '';
+        
+        // 使用类型断言将maoUSDC对象转换为具有字符串索引的类型
+        const maoUSDCAddresses = tokenContracts.maoUSDC as Record<string, string>;
+        const targetNetworkKey = token.network.split('-')[0];
+        
+        // 首先尝试使用完整的目标网络名称作为键
+        if (token.network === 'Ethereum-Sepolia') {
+          const address = maoUSDCAddresses['Ethereum-Sepolia'];
+          if (address) {
+            updatedAddress = address;
+            console.log(`Found maoUSDC address using full network name Ethereum-Sepolia: ${updatedAddress}`);
+          }
+        }
+        // 尝试使用PlatON键
+        else if (token.network === 'PlatON-Mainnet' || targetNetworkKey === 'PlatON') {
+          const address = maoUSDCAddresses['PlatON'];
+          if (address) {
+            updatedAddress = address;
+            console.log(`Found maoUSDC address using network key PlatON: ${updatedAddress}`);
+          }
+        } else {
+          console.log(`No matching maoUSDC address found for ${token.network} or ${targetNetworkKey}`);
+        }
+        
+        if (updatedAddress && updatedAddress !== fromToken.address) {
+          console.log(`Updating maoUSDC address from ${fromToken.address} to ${updatedAddress} for ${token.network}`);
+          
+          // 创建更新后的fromToken
+          const updatedFromToken = {
+            ...fromToken,
+            address: updatedAddress
+          };
+          
+          // 触发一个自定义事件，通知body组件更新fromToken
+          const updateEvent = new CustomEvent("updateFromToken", {
+            detail: updatedFromToken,
+            bubbles: true,
+            cancelable: true
+          });
+          document.dispatchEvent(updateEvent);
+          console.log("Dispatched updateFromToken event with token:", updatedFromToken);
+        } else {
+          if (!updatedAddress) {
+            console.log("No valid maoUSDC address found for the target network");
+          } else {
+            console.log("maoUSDC address is already up to date");
+          }
+        }
+      } else {
+        console.log('maoUSDC token contracts configuration not found or invalid');
+      }
     }
     
     onTokenSelect(token);

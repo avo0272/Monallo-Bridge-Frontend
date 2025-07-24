@@ -470,7 +470,7 @@ async function getTargetTokenAddress(sourceToken: Token, targetNetwork: string):
 export default function Submit({ onConnectWallet, receiverAddress, amount, selectedToken1, selectedToken2 }: SubmitProps) {
     // 设置默认的代币信息
     const defaultToken1: Token = { symbol: "ETH", network: "Ethereum-Sepolia", address: "" };
-    const defaultToken2: Token = { symbol: "maoETH", network: "Imua-Testnet", address: "0x1870f6D7A02994EE08E7c9BC3aEad81f00de1A05" };
+    const defaultToken2: Token = { symbol: "maoETH", network: "Imua-Testnet", address: "0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9" };
     
     // 使用传入的代币信息或默认值
     const sourceToken = selectedToken1 || defaultToken1;
