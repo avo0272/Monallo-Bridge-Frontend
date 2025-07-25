@@ -1409,6 +1409,7 @@ const CONTRACT_ADDRESSES = {
     // 在Imua上销毁mao系列代币的Target合约
     'Imua-Testnet': {
       'maoETH': '0x4a91a4a24b6883dbbddc6e6704a3c0e96396d2e9', // Imua上销毁maoETH的Target合约地址
+      'maoLAT': '0x924A9fb56b2b1B5554327823b201b7eEF691E524', // Imua上销毁maoLAT的Target合约地址
       'maoUSDC': {
         'PlatON': '0x4ed64b15ab26b8fe3905b4101beccc1d5b3d49fd', // 当目标网络为PlatON时的maoUSDC销毁合约地址
         'Ethereum-Sepolia': '0xe5a26a2c90b6e629861bb25f10177f06720e5335', // 当目标网络为Ethereum-Sepolia时的maoUSDC销毁合约地址
