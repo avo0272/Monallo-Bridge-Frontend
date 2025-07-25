@@ -16,92 +16,83 @@ type BurnProgressBarProps = {
     currentStep: string | null;
 };
 
+const StatusIcon = ({ status }: { status: BurnStep['status'] }) => {
+    switch (status) {
+        case 'completed':
+            return (
+                <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            );
+        case 'active':
+            return (
+                <svg className="w-6 h-6 text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            );
+        case 'failed':
+            return (
+                <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            );
+        default: // pending
+            return <div className="w-6 h-6 bg-gray-300 rounded-full"></div>;
+    }
+};
+
 const BurnProgressBar: React.FC<BurnProgressBarProps> = ({ steps, currentStep }) => {
-    // Convert steps to array for rendering
-    const stepsArray = [
-        steps.burnPending,
-        steps.burnCompleted,
-        steps.mintPending,
-        steps.mintCompleted
+    const allSteps = [
+        { key: 'burnPending', ...steps.burnPending },
+        { key: 'burnCompleted', ...steps.burnCompleted },
+        { key: 'mintPending', ...steps.mintPending },
+        { key: 'mintCompleted', ...steps.mintCompleted }
     ];
 
-    // Get status class name for step
-    const getStepStatusClass = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return 'bg-green-500';
-            case 'active':
-                return 'bg-blue-500 animate-pulse';
-            case 'failed':
-                return 'bg-red-500';
-            default:
-                return 'bg-gray-300';
+    const currentStepIndex = currentStep ? allSteps.findIndex(s => s.key === currentStep) : -1;
+
+    const getConnectorColor = (index: number) => {
+        if (index < currentStepIndex) {
+            const step = allSteps[index];
+            if (step.status === 'completed') return 'bg-green-500';
+            if (step.status === 'failed') return 'bg-red-500';
         }
-    };
-
-    // Get status class name for connector
-    const getConnectorStatusClass = (index: number) => {
-        const currentStepIndex = currentStep ? [
-            'burnPending', 'burnCompleted', 'mintPending', 'mintCompleted'
-        ].indexOf(currentStep) : -1;
-
-        if (index >= currentStepIndex) {
-            return 'bg-gray-300';
-        }
-
-        const prevStepStatus = stepsArray[index].status;
-        const nextStepStatus = stepsArray[index + 1].status;
-
-        if (prevStepStatus === 'completed' && nextStepStatus === 'completed') {
-            return 'bg-green-500';
-        } else if (prevStepStatus === 'completed' && nextStepStatus === 'active') {
+        if (index === currentStepIndex && allSteps[index].status === 'active') {
             return 'bg-blue-500';
-        } else if (prevStepStatus === 'failed' || nextStepStatus === 'failed') {
-            return 'bg-red-500';
-        } else {
-            return 'bg-gray-300';
         }
+        return 'bg-gray-300';
     };
 
     return (
-        <div className="w-full py-6">
-            <div className="flex items-center justify-between">
-                {stepsArray.map((step, index) => (
-                    <React.Fragment key={index}>
-                        <div className="flex flex-col items-center">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getStepStatusClass(step.status)}`}>
-                                {step.status === 'completed' && (
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                )}
-                                {step.status === 'failed' && (
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                )}
-                                {step.status === 'active' && (
-                                    <div className="w-3 h-3 bg-white rounded-full"></div>
+        <div className="w-full py-6 px-4">
+            <div className="relative">
+                {allSteps.map((step, index) => {
+                    if (index > currentStepIndex + 1) return null;
+                    if (currentStepIndex === -1 && index > 0) return null;
+
+                    const isVisible = index <= currentStepIndex || (index === currentStepIndex + 1 && allSteps[currentStepIndex]?.status === 'completed');
+                    if(!isVisible && !(index === 0 && currentStepIndex === -1)) return null;
+
+                    return (
+                        <div key={step.key} className="flex items-start mb-8 last:mb-0">
+                            <div className="flex flex-col items-center mr-4">
+                                <StatusIcon status={step.status} />
+                                {index < allSteps.length - 1 && step.status === 'completed' && (index < currentStepIndex || (index === currentStepIndex && step.status === 'completed')) && (
+                                    <div className={`w-0.5 h-16 mt-2 ${getConnectorColor(index)}`}></div>
                                 )}
                             </div>
-                            <p className="mt-2 text-sm font-medium">{step.title}</p>
-                            {step.txHash && (
-                                <div className="mt-1">
-                                    <p className="text-xs text-gray-500 font-mono break-all max-w-[150px]">{step.txHash}</p>
-                                    <button 
-                                        onClick={() => navigator.clipboard.writeText(step.txHash || '')}
-                                        className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                                    >
-                                        Copy Hash
-                                    </button>
-                                </div>
-                            )}
+                            <div className="mt-1">
+                                <p className={`font-medium ${step.status === 'active' ? 'text-blue-600' : ''}`}>{step.title}</p>
+                                {step.txHash && (
+                                    <p className="text-xs text-gray-500 font-mono mt-1">
+                                        txhash: <a href={`#`} className="text-blue-600 hover:underline break-all">{step.txHash}</a>
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                        {index < stepsArray.length - 1 && (
-                            <div className={`flex-1 h-1 mx-2 ${getConnectorStatusClass(index)}`}></div>
-                        )}
-                    </React.Fragment>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

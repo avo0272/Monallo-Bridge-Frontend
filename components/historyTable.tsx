@@ -158,17 +158,17 @@ export default function HistoryTable() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-lg shadow-lg p-8">
       {/* Control panel */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex-1"></div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <div className="relative flex items-center">
             {/* Refresh button */}
             <button
               onClick={handleManualRefresh}
               disabled={loading}
-              className="ml-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="ml-1 sm:ml-2 p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
               <Image 
                 src="/refresh.png" 
@@ -201,32 +201,32 @@ export default function HistoryTable() {
 
       {/* Data table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full table-auto">
+        <table className="min-w-full w-max table-auto">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
                 From
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Source
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
                 Source TxHash
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Locked Token
+                Token
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
                 To
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Target
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
                 Target TxHash
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Minted Token
+                Token
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
@@ -244,99 +244,143 @@ export default function HistoryTable() {
               const statusDisplay = getStatusDisplay(record.status);
               return (
                 <tr key={record._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono">{formatAddress(record.fromAddress)}</span>
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                    <div className="flex items-center space-x-1 sm:space-x-2 min-w-[100px] sm:min-w-[120px]">
+                      <span 
+                        className="font-mono cursor-pointer hover:text-blue-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.fromAddress, 'address'),
+                            "_blank"
+                          );
+                        }}
+                      >
+                        {formatAddress(record.fromAddress)}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.fromAddress),
+                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.fromAddress, 'address'),
                             "_blank"
                           );
                         }}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 hover:text-blue-700 flex items-center justify-center w-5 h-5"
                       >
-                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
+                        <Image src="/share.png" alt="View" width={16} height={16} className="object-contain"/>
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     {record.sourceChain}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono">{formatAddress(record.sourceFromTxHash)}</span>
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                    <div className="flex items-center space-x-1 sm:space-x-2 min-w-[100px] sm:min-w-[120px]">
+                      <span 
+                        className="font-mono cursor-pointer hover:text-blue-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.sourceFromTxHash, 'tx'),
+                            "_blank"
+                          );
+                        }}
+                      >
+                        {formatAddress(record.sourceFromTxHash)}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.sourceFromTxHash),
+                            getExplorerUrl(record.sourceChain || "Ethereum-Sepolia", record.sourceFromTxHash, 'tx'),
                             "_blank"
                           );
                         }}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 hover:text-blue-700 flex items-center justify-center w-5 h-5"
                       >
-                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
+                        <Image src="/share.png" alt="View" width={16} height={16} className="object-contain"/>
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     {record.lockedToken}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono">{formatAddress(record.toAddress)}</span>
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
+                    <div className="flex items-center space-x-1 sm:space-x-2 min-w-[100px] sm:min-w-[120px]">
+                      <span 
+                        className="font-mono cursor-pointer hover:text-blue-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            getExplorerUrl(record.targetChain || "Imua-Testnet", record.toAddress, 'address'),
+                            "_blank"
+                          );
+                        }}
+                      >
+                        {formatAddress(record.toAddress)}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            getExplorerUrl(record.targetChain || "Imua-Testnet", record.toAddress),
+                            getExplorerUrl(record.targetChain || "Imua-Testnet", record.toAddress, 'address'),
                             "_blank"
                           );
                         }}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 hover:text-blue-700 flex items-center justify-center w-5 h-5"
                       >
-                        <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
+                        <Image src="/share.png" alt="View" width={16} height={16} className="object-contain"/>
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     {record.targetChain}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                     {record.targetToTxHash ? (
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono">{formatAddress(record.targetToTxHash)}</span>
+                      <div className="flex items-center space-x-1 sm:space-x-2 min-w-[100px] sm:min-w-[120px]">
+                        <span 
+                          className="font-mono cursor-pointer hover:text-blue-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              getExplorerUrl(record.targetChain || "Imua-Testnet", record.targetToTxHash || "", 'tx'),
+                              "_blank"
+                            );
+                          }}
+                        >
+                          {formatAddress(record.targetToTxHash)}
+                        </span>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(
-                              getExplorerUrl(record.targetChain || "Imua-Testnet", record.targetToTxHash || ""),
+                              getExplorerUrl(record.targetChain || "Imua-Testnet", record.targetToTxHash || "", 'tx'),
                               "_blank"
                             );
                           }}
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-blue-500 hover:text-blue-700 flex items-center justify-center w-5 h-5"
                         >
-                          <Image src="/share.png" alt="View" width={12} height={12} className="w-13 object-contain"/>
+                          <Image src="/share.png" alt="View" width={16} height={16} className="object-contain"/>
                         </button>
                       </div>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     {record.mintedToken}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-mono">
                     {record.amount}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
                     {formatTimestamp(record.timestamp)}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
+                  <td className="px-1 sm:px-2 md:px-4 py-3 sm:py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      className={`inline-flex px-1 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold rounded-full ${
                         statusDisplay.color
                       }`}
                     >

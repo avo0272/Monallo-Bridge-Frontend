@@ -255,31 +255,124 @@ export default function Body() {
         const handleUpdateFromToken = (event: CustomEvent) => {
             try {
                 const updatedToken = event.detail;
-                console.log("Received updateFromToken event with token:", updatedToken);
+                const eventId = new Date().getTime().toString(36) + Math.random().toString(36).substr(2, 5);
+                console.log(`[EVENT HANDLER ${eventId}] Received updateFromToken event with token:`, updatedToken);
+                console.log(`[EVENT HANDLER ${eventId}] Event source:`, event.target);
+                console.log(`[EVENT HANDLER ${eventId}] Event path:`, event.composedPath?.() || 'Not available');
+                console.log(`[EVENT HANDLER ${eventId}] Event timestamp:`, new Date().toISOString());
                 
                 // 检查是否是IMUA链上的maoUSDC
                 if (updatedToken && updatedToken.network === 'Imua-Testnet' && updatedToken.symbol === 'maoUSDC') {
-                    console.log(`Updating maoUSDC address from ${selectedToken1.address} to ${updatedToken.address}`);
-                    setSelectedToken1(updatedToken);
-                    console.log("selectedToken1 has been updated to:", updatedToken);
-                } else {
-                    console.log("Received token is not maoUSDC on IMUA or has invalid format");
+                    console.log(`[EVENT HANDLER ${eventId}] ===== MAOUSDC ADDRESS UPDATE DETECTED =====`);
+                    console.log(`[EVENT HANDLER ${eventId}] Before update in body.tsx: selectedToken1 = `, {
+                        symbol: selectedToken1.symbol,
+                        network: selectedToken1.network,
+                        address: selectedToken1.address
+                    });
+                    console.log(`[EVENT HANDLER ${eventId}] Updating maoUSDC address from ${selectedToken1.address} to ${updatedToken.address}`);
+                    
+                    // 更新状态前记录当前值
+                    const prevAddress = selectedToken1.address;
+                    
+                    // 检查地址是否真的不同
+                    if (prevAddress !== updatedToken.address) {
+                        console.log(`[EVENT HANDLER ${eventId}] Address change confirmed: ${prevAddress} -> ${updatedToken.address}`);
+                        
+                        // 更新状态
+                        setSelectedToken1(updatedToken);
+                        
+                        // 由于状态更新是异步的，这里只能记录更新操作，不能立即看到更新后的值
+                        console.log(`[EVENT HANDLER ${eventId}] Address update initiated: ${prevAddress} -> ${updatedToken.address}`);
+                        console.log(`[EVENT HANDLER ${eventId}] selectedToken1 update requested with:`, updatedToken);
+                        
+                        // 使用setTimeout来检查状态是否成功更新（仅用于调试）
+                        setTimeout(() => {
+                            console.log(`[EVENT HANDLER ${eventId}] After update check (async): Current selectedToken1:`, {
+                                symbol: selectedToken1.symbol,
+                                network: selectedToken1.network,
+                                address: selectedToken1.address
+                            });
+                            
+                            // 验证地址是否真的更新了
+                            if (selectedToken1.address === updatedToken.address) {
+                                console.log(`[EVENT HANDLER ${eventId}] ✅ Address successfully updated!`);
+                            } else {
+                                console.warn(`[EVENT HANDLER ${eventId}] ❌ Address update failed! Current address doesn't match expected value.`);
+                                console.warn(`[EVENT HANDLER ${eventId}] Expected: ${updatedToken.address}, Actual: ${selectedToken1.address}`);
+                                
+                                // 再次尝试更新
+                                console.log(`[EVENT HANDLER ${eventId}] Attempting to update address again...`);
+                                setSelectedToken1(updatedToken);
+                                
+                                // 再次检查
+                                setTimeout(() => {
+                                    console.log(`[EVENT HANDLER ${eventId}] Second check after retry: Current selectedToken1:`, {
+                                        symbol: selectedToken1.symbol,
+                                        network: selectedToken1.network,
+                                        address: selectedToken1.address
+                                    });
+                                    
+                                    if (selectedToken1.address === updatedToken.address) {
+                                        console.log(`[EVENT HANDLER ${eventId}] ✅ Address successfully updated after retry!`);
+                                    } else {
+                                        console.error(`[EVENT HANDLER ${eventId}] ❌❌ Address update failed even after retry!`);
+                                    }
+                                }, 200);
+                            }
+                        }, 100);
+                    } else {
+                        console.log(`[EVENT HANDLER ${eventId}] Address is already up to date: ${prevAddress}`);
+                    }
+                }
+                else {
+                    console.log(`[EVENT HANDLER ${eventId}] Received token is not maoUSDC on IMUA or has invalid format`);
+                    console.log(`[EVENT HANDLER ${eventId}] Expected: network='Imua-Testnet', symbol='maoUSDC'`)
+                    console.log(`[EVENT HANDLER ${eventId}] Received: network='${updatedToken?.network || 'undefined'}', symbol='${updatedToken?.symbol || 'undefined'}'`);
                 }
             } catch (error) {
-                console.error("Error handling updateFromToken event:", error);
+                console.error(`[EVENT HANDLER] Error handling updateFromToken event:`, error);
             }
         };
-        
+
         // 添加事件监听器
         document.addEventListener('updateFromToken', handleUpdateFromToken as EventListener);
-        console.log("Added updateFromToken event listener");
+        console.log("[SETUP] Added updateFromToken event listener at " + new Date().toISOString());
         
         // 清理函数
         return () => {
             document.removeEventListener('updateFromToken', handleUpdateFromToken as EventListener);
-            console.log("Removed updateFromToken event listener");
+            console.log("[CLEANUP] Removed updateFromToken event listener at " + new Date().toISOString());
         };
     }, []); // 移除selectedToken1依赖，避免重复添加监听器
+    
+    // 添加一个额外的useEffect来监控selectedToken1变化
+    useEffect(() => {
+        const stateChangeId = new Date().getTime().toString(36) + Math.random().toString(36).substr(2, 5);
+        
+        if (selectedToken1.network === 'Imua-Testnet' && selectedToken1.symbol === 'maoUSDC') {
+            console.log(`[STATE CHANGE ${stateChangeId}] ===== MAOUSDC STATE UPDATED =====`);
+            console.log(`[STATE CHANGE ${stateChangeId}] selectedToken1 (maoUSDC) changed, current address: ${selectedToken1.address}`);
+            console.log(`[STATE CHANGE ${stateChangeId}] Full token info:`, {
+                symbol: selectedToken1.symbol,
+                network: selectedToken1.network,
+                address: selectedToken1.address
+            });
+            console.log(`[STATE CHANGE ${stateChangeId}] Timestamp: ${new Date().toISOString()}`);
+            
+            // 记录当前状态以便后续跟踪
+            window.setTimeout(() => {
+                console.log(`[STATE CHANGE ${stateChangeId}] Follow-up check at ${new Date().toISOString()}`);
+                console.log(`[STATE CHANGE ${stateChangeId}] Current maoUSDC address: ${selectedToken1.address}`);
+                
+                // 这里可以添加额外的验证逻辑，例如检查地址格式是否正确
+                if (selectedToken1.address && selectedToken1.address.startsWith('0x') && selectedToken1.address.length === 42) {
+                    console.log(`[STATE CHANGE ${stateChangeId}] ✅ Address format is valid`);
+                } else {
+                    console.warn(`[STATE CHANGE ${stateChangeId}] ⚠️ Address format may be invalid: ${selectedToken1.address}`);
+                }
+            }, 500);
+        }
+    }, [selectedToken1]);
 
     // 移除获取Token2余额的代码，因为不需要获取Token2的余额
 

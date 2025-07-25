@@ -577,7 +577,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             let contractAddress;
             if (sourceToken.symbol.startsWith('mao')) {
                 // 对于mao代币，使用销毁合约地址
-                contractAddress = contractService.getBurnContractAddress(currentNetwork);
+                contractAddress = contractService.getBurnContractAddress(currentNetwork, sourceToken.symbol, targetToken.network);
                 if (!contractAddress) {
                     throw new Error(`Network ${currentNetwork} does not have a configured burn contract address`);
                 }
@@ -598,8 +598,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             
             dispatch({ type: 'SET_AUTHORIZED_AMOUNT', payload: authorizedAmount });
             
-            // 检查授权额度是否足够
-            const needsAuth = parseFloat(authorizedAmount) < parseFloat(amount);
+            // 检查授权额度是否足够 - 使用与提交时相同的比较逻辑
+            const needsAuth = !hasSufficientAllowance(authorizedAmount, amount);
             dispatch({ type: 'SET_NEEDS_AUTHORIZATION', payload: needsAuth });
             console.log(`钱包地址: ${state.walletAddress}`);
             console.log(`代币地址: ${sourceToken.address}`);
@@ -667,7 +667,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             let contractAddress;
             if (sourceToken.symbol.startsWith('mao')) {
                 // 对于mao代币，使用销毁合约地址
-                contractAddress = contractService.getBurnContractAddress(currentNetwork);
+                contractAddress = contractService.getBurnContractAddress(currentNetwork, sourceToken.symbol, targetToken.network);
                 if (!contractAddress) {
                     throw new Error(`Network ${currentNetwork} does not have a configured burn contract address`);
                 }
@@ -685,7 +685,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 state.walletAddress
             );
             
-            if (parseFloat(tokenBalance) < parseFloat(amount)) {
+            // 检查余额是否足够 - 使用与提交时相同的比较逻辑
+            if (!hasSufficientBalance(tokenBalance, amount)) {
                 throw new Error(`Insufficient token balance. Current balance: ${tokenBalance} ${sourceToken.symbol}`);
             }
             
@@ -943,11 +944,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             
             // Choose contract operation based on token type and authorization status
             let result;
-            if (sourceToken.symbol.startsWith('mao') && parseFloat(state.authorizedAmount) >= parseFloat(value)) {
+            if (sourceToken.symbol.startsWith('mao') && hasSufficientAllowance(state.authorizedAmount, value)) {
                 // If it's a mao token and has sufficient authorization, call the burn contract
-                const burnContractAddress = contractService.getBurnContractAddress(currentNetwork);
+                const burnContractAddress = contractService.getBurnContractAddress(currentNetwork, sourceToken.symbol, targetToken.network);
                 if (!burnContractAddress) {
-                    throw new Error(`Network ${currentNetwork} does not support burn operation`);
+                    throw new Error(`Network ${currentNetwork} does not support burn operation for ${sourceToken.symbol}`);
                 }
                 
                 // Initialize burn progress bar status
@@ -955,7 +956,10 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     type: 'UPDATE_BURN_STEP', 
                     payload: { 
                         step: 'burnPending', 
-                        data: { status: 'active' } 
+                        data: { 
+                            status: 'active',
+                            title: 'Waiting for user wallet confirmation signature'
+                        } 
                     } 
                 });
                 dispatch({ 
@@ -1024,7 +1028,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 // Convert wei format value to ether unit for subsequent comparison
                 // Use Web3 instance directly from tokenUtils to avoid dependency on web3Service.web3
                 const web3 = new Web3();
-                const formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
+                // 根据代币精度从wei格式转换
+                let formattedValueInEther: string;
+                if (tokenDecimals === 18) {
+                    // 使用web3.utils.fromWei仅适用于18位精度的代币
+                    formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
+                } else {
+                    // 对于非18位精度的代币，手动计算
+                    const amountBN = BigInt(formattedValue);
+                    formattedValueInEther = (Number(amountBN) / Math.pow(10, tokenDecimals)).toString();
+                }
                 
                 // Use utility functions to check authorization and balance
                 console.log("Authorization comparison:", "Current authorization (original value):", currentAllowance, "Required amount (original value):", formattedValue);
@@ -1083,6 +1096,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     receiver: receiver,
                     amount: formattedValue,
                     tokenAddress: sourceToken.address,
+                    tokenSymbol: sourceToken.symbol, // 添加代币符号参数
                     targetNetwork: targetNetworkName // 添加目标网络参数
                 });
             } else {
@@ -1141,7 +1155,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     // 格式化金额用于比较
                     const formattedValue = parseTokenAmount(value, tokenDecimals);
                     const web3 = new Web3();
-                    const formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
+                    // 根据代币精度从wei格式转换
+                    let formattedValueInEther: string;
+                    if (tokenDecimals === 18) {
+                        // 使用web3.utils.fromWei仅适用于18位精度的代币
+                        formattedValueInEther = web3.utils.fromWei(formattedValue, 'ether');
+                    } else {
+                        // 对于非18位精度的代币，手动计算
+                        const amountBN = BigInt(formattedValue);
+                        formattedValueInEther = (Number(amountBN) / Math.pow(10, tokenDecimals)).toString();
+                    }
                     
                     // 检查授权是否足够
                     console.log("Authorization comparison:", "Current authorization:", currentAllowance, "Required amount:", formattedValueInEther);
@@ -1169,15 +1192,68 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 // 获取目标网络信息，与burnTokens函数类似
                 const targetNetworkName = targetToken.network;
                 
+                // 处理特殊情况：IMUA链上的maoUSDC地址需要根据目标网络动态选择
+                let tokenAddress = sourceToken.address;
+                console.log(`[LOCK TOKENS] Initial tokenAddress: ${tokenAddress}`);
+                console.log(`[LOCK TOKENS] Source token details:`, {
+                    symbol: sourceToken.symbol,
+                    network: sourceToken.network,
+                    address: sourceToken.address,
+                    isNative: isNative
+                });
+                console.log(`[LOCK TOKENS] Target network: ${targetNetworkName}`);
+                
+                if (!isNative && sourceToken.network === 'Imua-Testnet' && sourceToken.symbol === 'maoUSDC') {
+                    console.log(`[MAOUSDC LOCK] Detected maoUSDC on IMUA chain, getting dynamic address for target network: ${targetNetworkName}`);
+                    console.log(`[MAOUSDC LOCK] Timestamp: ${new Date().toISOString()}`);
+                    
+                    // 确保使用正确的maoUSDC地址
+                    const dynamicAddress = contractService.getTokenContractAddress(
+                        sourceToken.network, 
+                        sourceToken.symbol, 
+                        targetNetworkName
+                    );
+                    
+                    console.log(`[MAOUSDC LOCK] getTokenContractAddress result: ${dynamicAddress || 'null'}`);
+                    
+                    if (dynamicAddress) {
+                        const addressChanged = tokenAddress !== dynamicAddress;
+                        tokenAddress = dynamicAddress;
+                        console.log(`[MAOUSDC LOCK] Using dynamic maoUSDC address for ${targetNetworkName}: ${tokenAddress}`);
+                        console.log(`[MAOUSDC LOCK] Address changed: ${addressChanged ? 'YES' : 'NO'} (original: ${sourceToken.address})`);
+                    } else {
+                        console.warn(`[MAOUSDC LOCK] Failed to get dynamic maoUSDC address for ${targetNetworkName}, using original: ${sourceToken.address}`);
+                    }
+                }
+                
+                // 最终确认使用的地址
+                console.log(`[LOCK EXECUTION] Final token address being used: ${tokenAddress}`);
+                console.log(`[LOCK EXECUTION] Parameters for lockTokens:`, {
+                    networkName: currentNetwork,
+                    sender: currentAddress,
+                    receiver: receiver,
+                    amount: value,
+                    isNative: isNative,
+                    tokenAddress: isNative ? 'Native (undefined)' : tokenAddress,
+                    targetNetwork: targetNetworkName
+                });
+                
+                // 执行锁定操作
                 result = await contractService.lockTokens({
                     networkName: currentNetwork,
                     sender: currentAddress,
                     receiver: receiver,
                     amount: value,
                     isNative: isNative,
-                    tokenAddress: isNative ? undefined : sourceToken.address,
+                    tokenAddress: isNative ? undefined : tokenAddress, // 使用可能更新后的地址
                     targetNetwork: targetNetworkName // 添加目标网络参数
                 });
+                
+                // 记录执行结果
+                console.log(`[LOCK EXECUTION] Lock transaction completed at ${new Date().toISOString()}`);
+                if (result && result.transactionHash) {
+                    console.log(`[LOCK EXECUTION] Transaction hash: ${result.transactionHash}`);
+                }
             }
             console.log("Lock transaction result:", result);
             
@@ -1192,14 +1268,22 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     type: 'UPDATE_BURN_STEP', 
                     payload: { 
                         step: 'burnPending', 
-                        data: { status: 'completed', txHash: txHash } 
+                        data: { 
+                            status: 'completed', 
+                            txHash: txHash,
+                            title: 'User wallet have been confirmation signature'
+                        } 
                     } 
                 });
                 dispatch({ 
                     type: 'UPDATE_BURN_STEP', 
                     payload: { 
                         step: 'burnCompleted', 
-                        data: { status: 'active', txHash: txHash } 
+                        data: { 
+                            status: 'active', 
+                            txHash: txHash,
+                            title: `[${sourceToken.network}] ${sourceToken.symbol} is burning...`
+                        } 
                     } 
                 });
                 dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'burnCompleted' });
@@ -1210,14 +1294,20 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                         type: 'UPDATE_BURN_STEP', 
                         payload: { 
                             step: 'burnCompleted', 
-                            data: { status: 'completed' } 
+                            data: { 
+                                status: 'completed',
+                                title: `[${sourceToken.network}] ${sourceToken.symbol} burned successfully`
+                            } 
                         } 
                     });
                     dispatch({ 
                         type: 'UPDATE_BURN_STEP', 
                         payload: { 
                             step: 'mintPending', 
-                            data: { status: 'active' } 
+                            data: { 
+                                status: 'active',
+                                title: 'Cross-chain communication protocol is being processed'
+                            } 
                         } 
                     });
                     dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintPending' });
@@ -1261,7 +1351,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     data: { 
                         status: 'completed', 
                         txHash: txHash,
-                        title: `[${sourceToken.network}] ${sourceToken.symbol} lock successfully txhash: ${txHash}`
+                        title: `[${sourceToken.network}] ${sourceToken.symbol} lock successful !`
                     }
                 }
             });

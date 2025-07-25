@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react";
 import { formatNumber } from "../utils/numberUtils";
+import { hasSufficientBalance } from "../utils/tokenUtils";
 type Option3Props = {
   amount: string | number; // 修改为string或number类型，以支持小数点输入
   onAmountChange: (value: string | number) => void;
@@ -37,7 +38,7 @@ export default function Option3({amount, onAmountChange, price, balance, walletC
         
         if (regex.test(value)) {
             // 检查输入值是否超过余额
-            if (balance && parseFloat(value) > parseFloat(balance)) {
+            if (balance && !hasSufficientBalance(balance, value)) {
                 setWalletError("Amount cannot exceed your balance");
                 // 将输入值限制为余额
                 onAmountChange(balance);
