@@ -1,6 +1,7 @@
 import React from 'react';
+import { getExplorerUrl } from '../utils/explorerUtils';
 
-type BurnStep = {
+type BridgeStep = {
     status: 'pending' | 'active' | 'completed' | 'failed';
     title: string;
     txHash?: string;
@@ -8,15 +9,17 @@ type BurnStep = {
 
 type BurnProgressBarProps = {
     steps: {
-        burnPending: BurnStep;
-        burnCompleted: BurnStep;
-        mintPending: BurnStep;
-        mintCompleted: BurnStep;
+        burnPending: BridgeStep;
+        burnCompleted: BridgeStep;
+        mintPending: BridgeStep;
+        mintCompleted: BridgeStep;
     };
     currentStep: string | null;
+    sourceNetwork?: string;
+    targetNetwork?: string;
 };
 
-const StatusIcon = ({ status }: { status: BurnStep['status'] }) => {
+const StatusIcon = ({ status }: { status: BridgeStep['status'] }) => {
     switch (status) {
         case 'completed':
             return (
@@ -42,7 +45,7 @@ const StatusIcon = ({ status }: { status: BurnStep['status'] }) => {
     }
 };
 
-const BurnProgressBar: React.FC<BurnProgressBarProps> = ({ steps, currentStep }) => {
+const BurnProgressBar: React.FC<BurnProgressBarProps> = ({ steps, currentStep, sourceNetwork, targetNetwork }) => {
     const allSteps = [
         { key: 'burnPending', ...steps.burnPending },
         { key: 'burnCompleted', ...steps.burnCompleted },
@@ -84,9 +87,20 @@ const BurnProgressBar: React.FC<BurnProgressBarProps> = ({ steps, currentStep })
                             </div>
                             <div className="mt-1">
                                 <p className={`font-medium ${step.status === 'active' ? 'text-blue-600' : ''}`}>{step.title}</p>
-                                {step.txHash && (
+                                {step.txHash && (step.key === 'burnCompleted' || step.key === 'mintCompleted') && (
                                     <p className="text-xs text-gray-500 font-mono mt-1">
-                                        txhash: <a href={`#`} className="text-blue-600 hover:underline break-all">{step.txHash}</a>
+                                        txhash: <a 
+                                            href={getExplorerUrl(
+                                                step.key === 'burnCompleted' ? sourceNetwork || '' : targetNetwork || '', 
+                                                step.txHash, 
+                                                'tx'
+                                            )} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="text-blue-600 hover:underline break-all"
+                                        >
+                                            {step.txHash}
+                                        </a>
                                     </p>
                                 )}
                             </div>

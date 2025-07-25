@@ -1631,31 +1631,22 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                                         {sourceToken.symbol.startsWith('mao') ? (
                                             <BurnProgressBar 
                                                 steps={state.burnSteps} 
-                                                currentStep={state.currentBurnStep} 
+                                                currentStep={state.currentBurnStep}
+                                                sourceNetwork={sourceToken.network}
+                                                targetNetwork={targetToken.network}
                                             />
                                         ) : (
                                             <BridgeProgressBar 
                                                 steps={state.bridgeSteps} 
-                                                currentStep={state.currentStep} 
+                                                currentStep={state.currentStep}
+                                                sourceNetwork={sourceToken.network}
+                                                targetNetwork={targetToken.network}
                                             />
                                         )}
                                     </div>
                                 )}
                                 
-                                {state.mintStatus.targetToTxHash && !state.mintStatus.message.includes('Authorization') && (
-                                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                        <p className="text-sm font-medium text-gray-700">Transaction Hash:</p>
-                                        <p className="text-sm font-mono mt-1 break-all" title={state.mintStatus.targetToTxHash}>
-                                            {state.mintStatus.targetToTxHash}
-                                        </p>
-                                        <button 
-                                            onClick={() => navigator.clipboard.writeText(state.mintStatus?.targetToTxHash || '')}
-                                            className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                                        >
-                                            Copy Hash
-                                        </button>
-                                    </div>
-                                )}
+
                             </div>
                             <button 
                                 onClick={() => dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false })} 
