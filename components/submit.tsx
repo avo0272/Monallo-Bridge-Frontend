@@ -1631,12 +1631,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                                         {sourceToken.symbol.startsWith('mao') ? (
                                             <BurnProgressBar 
                                                 steps={state.burnSteps} 
-                                                currentStep={state.currentBurnStep} 
+                                                currentStep={state.currentBurnStep}
+                                                sourceNetwork={sourceToken.network}
+                                                targetNetwork={targetToken.network}
                                             />
                                         ) : (
                                             <BridgeProgressBar 
                                                 steps={state.bridgeSteps} 
-                                                currentStep={state.currentStep} 
+                                                currentStep={state.currentStep}
+                                                sourceNetwork={sourceToken.network}
+                                                targetNetwork={targetToken.network}
                                             />
                                         )}
                                     </div>

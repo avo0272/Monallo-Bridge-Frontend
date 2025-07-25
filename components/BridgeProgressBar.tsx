@@ -1,4 +1,5 @@
 import React from 'react';
+import { getExplorerUrl } from '../utils/explorerUtils';
 
 type BridgeStep = {
     status: 'pending' | 'active' | 'completed' | 'failed';
@@ -14,6 +15,8 @@ type BridgeProgressBarProps = {
         mintCompleted: BridgeStep;
     };
     currentStep: string | null;
+    sourceNetwork?: string;
+    targetNetwork?: string;
 };
 
 const StatusIcon = ({ status }: { status: BridgeStep['status'] }) => {
@@ -42,7 +45,7 @@ const StatusIcon = ({ status }: { status: BridgeStep['status'] }) => {
     }
 };
 
-const BridgeProgressBar: React.FC<BridgeProgressBarProps> = ({ steps, currentStep }) => {
+const BridgeProgressBar: React.FC<BridgeProgressBarProps> = ({ steps, currentStep, sourceNetwork, targetNetwork }) => {
     const allSteps = [
         { key: 'lockPending', ...steps.lockPending },
         { key: 'lockCompleted', ...steps.lockCompleted },
@@ -84,9 +87,20 @@ const BridgeProgressBar: React.FC<BridgeProgressBarProps> = ({ steps, currentSte
                             </div>
                             <div className="mt-1">
                                 <p className={`font-medium ${step.status === 'active' ? 'text-blue-600' : ''}`}>{step.title}</p>
-                                {step.txHash && (
+                                {step.txHash && (step.key === 'lockCompleted' || step.key === 'mintCompleted') && (
                                     <p className="text-xs text-gray-500 font-mono mt-1">
-                                        txhash: <a href={`#`} className="text-blue-600 hover:underline break-all">{step.txHash}</a>
+                                        txhash: <a 
+                                            href={getExplorerUrl(
+                                                step.key === 'lockCompleted' ? sourceNetwork || '' : targetNetwork || '', 
+                                                step.txHash, 
+                                                'tx'
+                                            )} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="text-blue-600 hover:underline break-all"
+                                        >
+                                            {step.txHash}
+                                        </a>
                                     </p>
                                 )}
                             </div>
