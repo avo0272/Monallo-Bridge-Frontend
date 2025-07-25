@@ -92,7 +92,8 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
       });
 
   const handleTokenClick = (token: Token) => {
-    console.log("Selected target token:", token);
+    console.log("[TOKEN SELECTION] Selected target token:", token);
+    console.log("[TOKEN SELECTION] Timestamp:", new Date().toISOString());
     
     // 检查钱包是否已连接
     if (!walletConnected) {
@@ -103,24 +104,30 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
     
     // 检查是否需要更新From网络中IMUA链上的maoUSDC地址
     if (fromToken && fromToken.network === 'Imua-Testnet' && fromToken.symbol === 'maoUSDC') {
-      console.log("From token is maoUSDC on IMUA, checking if address needs update based on target network:", token.network);
+      console.log("[MAOUSDC UPDATE] From token is maoUSDC on IMUA, checking if address needs update based on target network:", token.network);
+      console.log("[MAOUSDC UPDATE] Current fromToken:", {
+        symbol: fromToken.symbol,
+        network: fromToken.network,
+        address: fromToken.address
+      });
       
       // 获取正确的maoUSDC地址
       const tokenContracts = CONTRACT_ADDRESSES.TOKEN_CONTRACTS['Imua-Testnet'];
       if (tokenContracts && tokenContracts.maoUSDC && typeof tokenContracts.maoUSDC === 'object') {
-        console.log('Found maoUSDC token contracts configuration:', tokenContracts.maoUSDC);
+        console.log('[MAOUSDC UPDATE] Found maoUSDC token contracts configuration:', tokenContracts.maoUSDC);
         let updatedAddress = '';
         
         // 使用类型断言将maoUSDC对象转换为具有字符串索引的类型
         const maoUSDCAddresses = tokenContracts.maoUSDC as Record<string, string>;
         const targetNetworkKey = token.network.split('-')[0];
+        console.log(`[MAOUSDC UPDATE] Target network: ${token.network}, Target network key: ${targetNetworkKey}`);
         
         // 首先尝试使用完整的目标网络名称作为键
         if (token.network === 'Ethereum-Sepolia') {
           const address = maoUSDCAddresses['Ethereum-Sepolia'];
           if (address) {
             updatedAddress = address;
-            console.log(`Found maoUSDC address using full network name Ethereum-Sepolia: ${updatedAddress}`);
+            console.log(`[MAOUSDC UPDATE] Found maoUSDC address using full network name Ethereum-Sepolia: ${updatedAddress}`);
           }
         }
         // 尝试使用PlatON键
@@ -128,20 +135,22 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
           const address = maoUSDCAddresses['PlatON'];
           if (address) {
             updatedAddress = address;
-            console.log(`Found maoUSDC address using network key PlatON: ${updatedAddress}`);
+            console.log(`[MAOUSDC UPDATE] Found maoUSDC address using network key PlatON: ${updatedAddress}`);
           }
         } else {
-          console.log(`No matching maoUSDC address found for ${token.network} or ${targetNetworkKey}`);
+          console.log(`[MAOUSDC UPDATE] No matching maoUSDC address found for ${token.network} or ${targetNetworkKey}`);
         }
         
         if (updatedAddress && updatedAddress !== fromToken.address) {
-          console.log(`Updating maoUSDC address from ${fromToken.address} to ${updatedAddress} for ${token.network}`);
+          console.log(`[MAOUSDC UPDATE] Before update: fromToken address = ${fromToken.address}`);
+          console.log(`[MAOUSDC UPDATE] Updating maoUSDC address from ${fromToken.address} to ${updatedAddress} for ${token.network}`);
           
           // 创建更新后的fromToken
           const updatedFromToken = {
             ...fromToken,
             address: updatedAddress
           };
+          console.log(`[MAOUSDC UPDATE] After update: fromToken address = ${updatedFromToken.address}`);
           
           // 触发一个自定义事件，通知body组件更新fromToken
           const updateEvent = new CustomEvent("updateFromToken", {
@@ -149,17 +158,32 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
             bubbles: true,
             cancelable: true
           });
-          document.dispatchEvent(updateEvent);
-          console.log("Dispatched updateFromToken event with token:", updatedFromToken);
+          
+          // 记录事件分发前的时间戳
+          console.log(`[MAOUSDC UPDATE] Dispatching event at: ${new Date().toISOString()}`);
+          
+          // 分发事件
+          const eventDispatched = document.dispatchEvent(updateEvent);
+          
+          // 记录事件分发结果
+          console.log(`[MAOUSDC UPDATE] Event dispatched successfully: ${eventDispatched}`);
+          console.log("[MAOUSDC UPDATE] Dispatched updateFromToken event with token:", updatedFromToken);
+          
+          // 验证事件是否被正确处理的检查
+          setTimeout(() => {
+            // 这里无法直接访问body组件中的状态，但可以记录一个检查点
+            console.log(`[MAOUSDC UPDATE] Event dispatch follow-up check at: ${new Date().toISOString()}`);
+            console.log(`[MAOUSDC UPDATE] Expected maoUSDC address after update: ${updatedAddress}`);
+          }, 200);
         } else {
           if (!updatedAddress) {
-            console.log("No valid maoUSDC address found for the target network");
+            console.log("[MAOUSDC UPDATE] No valid maoUSDC address found for the target network");
           } else {
-            console.log("maoUSDC address is already up to date");
+            console.log("[MAOUSDC UPDATE] maoUSDC address is already up to date");
           }
         }
       } else {
-        console.log('maoUSDC token contracts configuration not found or invalid');
+        console.log('[MAOUSDC UPDATE] maoUSDC token contracts configuration not found or invalid');
       }
     }
     
@@ -191,8 +215,8 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
             </div>
           );
         })}
-        <div className="flex flex-col items-center cursor-pointer">
-          <img src="other.png" alt="other networks" className="w-11 h-11 object-cover " />
+        <div className="flex flex-col items-center cursor-not-allowed">
+          <img src="other.png" alt="other networks" className="w-11 h-11 object-cover opacity-50" />
           <span className="text-white text-sm mt-2">Other</span>
         </div>
       </div>

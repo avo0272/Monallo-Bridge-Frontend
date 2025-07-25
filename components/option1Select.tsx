@@ -206,8 +206,8 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
             </div>
           );
         })}
-        <div className="flex flex-col items-center cursor-pointer">
-          <img src="other.png" alt="other networks" className="w-11 h-11 object-cover " />
+        <div className="flex flex-col items-center cursor-not-allowed">
+          <img src="other.png" alt="other networks" className="w-11 h-11 object-cover opacity-50" />
           <span className="text-white text-sm mt-2">Other</span>
         </div>
       </div>

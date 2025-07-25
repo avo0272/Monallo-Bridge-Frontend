@@ -65,10 +65,17 @@ export function formatTokenAmount(
       console.log(`输入已是小数形式: ${amountStr} => ${num}`);
     } else {
       try {
-        // 尝试作为wei格式转换
-        originalFormatted = web3.utils.fromWei(amountStr, 'ether');
+        // 根据代币精度从wei格式转换
+        if (decimals === 18) {
+          // 使用web3.utils.fromWei仅适用于18位精度的代币
+          originalFormatted = web3.utils.fromWei(amountStr, 'ether');
+        } else {
+          // 对于非18位精度的代币，手动计算
+          const amountBN = BigInt(amountStr);
+          originalFormatted = (Number(amountBN) / Math.pow(10, decimals)).toString();
+        }
         num = parseFloat(originalFormatted);
-        console.log(`从wei转换: ${amountStr} => ${originalFormatted} => ${num}`);
+        console.log(`从wei转换: ${amountStr} => ${originalFormatted} => ${num} (精度: ${decimals})`);
       } catch (conversionError) {
         // 如果转换失败，尝试直接解析
         num = parseFloat(amountStr);
@@ -115,11 +122,20 @@ export function parseTokenAmount(
     // 处理可能的精度问题
     // 确保数字格式正确，移除多余的0
     const normalizedAmount = parseFloat(amount).toString();
-    console.log(`解析代币数量: 原始输入=${amount}, 标准化后=${normalizedAmount}`);
+    console.log(`解析代币数量: 原始输入=${amount}, 标准化后=${normalizedAmount}, 精度=${decimals}`);
     
-    // 转换为wei格式
-    const weiAmount = web3.utils.toWei(normalizedAmount, 'ether');
-    console.log(`转换为wei格式: ${normalizedAmount} => ${weiAmount}`);
+    // 根据代币精度转换为wei格式
+    let weiAmount: string;
+    if (decimals === 18) {
+      // 使用web3.utils.toWei仅适用于18位精度的代币
+      weiAmount = web3.utils.toWei(normalizedAmount, 'ether');
+    } else {
+      // 对于非18位精度的代币，手动计算
+      const amountBN = BigInt(Math.round(parseFloat(normalizedAmount) * Math.pow(10, decimals)));
+      weiAmount = amountBN.toString();
+    }
+    
+    console.log(`转换为wei格式: ${normalizedAmount} => ${weiAmount} (精度: ${decimals})`);
     
     return weiAmount;
   } catch (error) {
@@ -312,16 +328,29 @@ export function generateTransactionId(): string {
  * 计算预估的gas费用
  * @param gasPrice gas价格（wei）
  * @param gasLimit gas限制
+ * @param decimals 代币精度，默认为18（ETH精度）
  * @returns 格式化的费用字符串
  */
-export function calculateGasFee(gasPrice: string, gasLimit: string): string {
+export function calculateGasFee(gasPrice: string, gasLimit: string, decimals: number = 18): string {
   try {
     const web3 = new Web3();
     const gasPriceBN = web3.utils.toBigInt(gasPrice);
     const gasLimitBN = web3.utils.toBigInt(gasLimit);
     const totalFee = gasPriceBN * BigInt(gasLimitBN);
     
-    return web3.utils.fromWei(totalFee.toString(), 'ether');
+    // 根据代币精度从wei格式转换
+    let formattedFee: string;
+    if (decimals === 18) {
+      // 使用web3.utils.fromWei仅适用于18位精度的代币
+      formattedFee = web3.utils.fromWei(totalFee.toString(), 'ether');
+    } else {
+      // 对于非18位精度的代币，手动计算
+      const divisor = Math.pow(10, decimals);
+      formattedFee = (Number(totalFee) / divisor).toString();
+    }
+    
+    console.log(`计算gas费用: 原始值=${totalFee.toString()}, 精度=${decimals}, 格式化后=${formattedFee}`);
+    return formattedFee;
   } catch (error) {
     console.error('计算gas费用失败:', error);
     return '0';
