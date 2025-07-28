@@ -1479,7 +1479,7 @@ const CONTRACT_ADDRESSES = {
     'PlatON-Mainnet': {
       'LAT': '', // 原生代币
       'USDC': '0xdA396A3C7FC762643f658B47228CD51De6cE936d', // USDC代币地址
-      'maoUSDC': '0x2E715D00Cd58a048077640Ca1d3aB5CdaB181f0c', // maoUSDC代币地址
+      'maoUSDC': '0x8967CEc2393082878d54A9906Cc1d7163292fB6C', // maoUSDC代币地址
       'maoETH': '0xE9B5Ee5E5cE9DcDc0E5cE9DcDc0E5cE9DcDc0E5cE9D', // maoETH代币地址
       'maoEURC': '0x644B4d44EE3b1afD5370b6E541d55Edf5E6F2120' // maoEURC代币地址
     }
@@ -1957,7 +1957,7 @@ class ContractService {
 
     try {
       const accounts = await this.web3.eth.getAccounts();
-      const fromAddress = accounts[0];
+      const fromAddress = this.web3.utils.toChecksumAddress(accounts[0]);
       
       const tokenContract = this.getMintTokenContract(tokenAddress);
       

@@ -89,7 +89,7 @@ const BridgeProgressBar: React.FC<BridgeProgressBarProps> = ({ steps, currentSte
                                 <p className={`font-medium ${step.status === 'active' ? 'text-blue-600' : ''}`}>{step.title}</p>
                                 {step.txHash && (step.key === 'lockCompleted' || step.key === 'mintCompleted') && (
                                     <p className="text-xs text-gray-500 font-mono mt-1">
-                                        txhash: <a 
+                                        txhash:<a 
                                             href={getExplorerUrl(
                                                 step.key === 'lockCompleted' ? sourceNetwork || '' : targetNetwork || '', 
                                                 step.txHash, 

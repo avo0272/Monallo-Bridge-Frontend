@@ -14,10 +14,10 @@ export const API_ENDPOINTS = {
   },
   // Development environment
   DEVELOPMENT: {
-    CROSS_LOCK_INFO: 'http://192.168.31.176:5000/api/crossLockInfo',
-    ADD_AUTHORIZATION: 'http://192.168.31.176:5000/api/addAuthorization',
-    GET_AMOUNT: 'http://192.168.31.176:5000/api/getAmount',
-    LOCK_INFO: 'http://192.168.31.176:5000/api/lockInfo'
+    CROSS_LOCK_INFO: 'http://192.168.31.178:5000/api/crossLockInfo',
+    ADD_AUTHORIZATION: 'http://192.168.31.178:5000/api/addAuthorization',
+    GET_AMOUNT: 'http://192.168.31.178:5000/api/getAmount',
+    LOCK_INFO: 'http://192.168.31.178:5000/api/lockInfo'
   }
 } as const;
 
