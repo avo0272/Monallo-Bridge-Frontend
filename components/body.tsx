@@ -12,6 +12,7 @@ import ReceiverAddress from "./receiverAddress";
 import { useState, useEffect } from "react"
 import web3Service from "../services/web3Service"
 import priceService from "../services/priceService"
+import { CONTRACT_ADDRESSES } from "../services/contractService"
 import Web3 from 'web3';
 
 
@@ -63,14 +64,23 @@ export default function Body() {
     const fetchTokenBalance = async (tokenInfo: { symbol: string; network: string; address: string }, isToken1: boolean = true) => {
         if (!walletAddress) return;
         
+        console.log(`[FETCH BALANCE] 开始获取余额 - 代币: ${tokenInfo.symbol}, 网络: ${tokenInfo.network}, 地址: ${tokenInfo.address}`);
+        
         setIsLoadingBalance(true);
         try {
             // 切换到对应网络 - 只对Token1执行
             if (isToken1) {
+                console.log(`[FETCH BALANCE] 切换到网络: ${tokenInfo.network}`);
                 await web3Service.switchNetwork(tokenInfo.network);
                 
+                // 确认当前网络
+                const currentNetwork = await web3Service.getCurrentNetwork();
+                console.log(`[FETCH BALANCE] 当前网络: ${currentNetwork}`);
+                
                 // 获取余额
+                console.log(`[FETCH BALANCE] 查询代币余额 - 代币地址: ${tokenInfo.address}, 钱包地址: ${walletAddress}`);
                 const balance = await web3Service.getTokenBalance(tokenInfo.address, walletAddress);
+                console.log(`[FETCH BALANCE] 获取到余额: ${balance} ${tokenInfo.symbol}`);
                 
                 setToken1Balance(balance);
             }
@@ -441,10 +451,52 @@ export default function Body() {
                         height={10} 
                         className="mx-auto mt-8 mb-3 w-7 h-7 cursor-pointer hover:opacity-80 transition-opacity" 
                         onClick={() => {
+                            console.log('[EXCHANGE] 开始交换代币');
+                            console.log('[EXCHANGE] 交换前 - selectedToken1:', selectedToken1);
+                            console.log('[EXCHANGE] 交换前 - selectedToken2:', selectedToken2);
+                            
                             // 交换selectedToken1和selectedToken2的值
                             const temp = {...selectedToken1};
-                            setSelectedToken1({...selectedToken2});
-                            setSelectedToken2(temp);
+                            let newSelectedToken1 = {...selectedToken2};
+                            const newSelectedToken2 = temp;
+                            
+                            // 检查交换后的selectedToken1是否是IMUA链上的maoUSDC
+                            if (newSelectedToken1.network === 'Imua-Testnet' && newSelectedToken1.symbol === 'maoUSDC') {
+                                console.log('[EXCHANGE] 检测到交换后的From是IMUA链上的maoUSDC，需要根据新的To网络更新地址');
+                                console.log('[EXCHANGE] 新的To网络:', newSelectedToken2.network);
+                                
+                                // 获取CONTRACT_ADDRESSES
+                                 const tokenContracts = CONTRACT_ADDRESSES.TOKEN_CONTRACTS['Imua-Testnet'];
+                                 if (tokenContracts && tokenContracts.maoUSDC && typeof tokenContracts.maoUSDC === 'object') {
+                                     const maoUSDCAddresses = tokenContracts.maoUSDC as Record<string, string>;
+                                     let updatedAddress = '';
+                                     
+                                     if (newSelectedToken2.network === 'Ethereum-Sepolia') {
+                                         updatedAddress = maoUSDCAddresses['Ethereum-Sepolia'];
+                                         console.log('[EXCHANGE] 使用Ethereum-Sepolia的maoUSDC地址:', updatedAddress);
+                                     } else if (newSelectedToken2.network === 'PlatON-Mainnet') {
+                                         updatedAddress = maoUSDCAddresses['PlatON'];
+                                         console.log('[EXCHANGE] 使用PlatON的maoUSDC地址:', updatedAddress);
+                                     }
+                                     
+                                     if (updatedAddress) {
+                                         newSelectedToken1.address = updatedAddress;
+                                         console.log('[EXCHANGE] 更新后的maoUSDC地址:', updatedAddress);
+                                     }
+                                 }
+                                 
+                                 // 设置更新后的状态
+                                 setSelectedToken1(newSelectedToken1);
+                                 setSelectedToken2(newSelectedToken2);
+                            } else {
+                                // 如果不是maoUSDC，直接设置
+                                setSelectedToken1(newSelectedToken1);
+                                setSelectedToken2(newSelectedToken2);
+                            }
+                            
+                            console.log('[EXCHANGE] 交换后 - 新的selectedToken1:', newSelectedToken1);
+                            console.log('[EXCHANGE] 交换后 - 新的selectedToken2:', newSelectedToken2);
+                            
                             // 交换余额显示
                             const tempBalance = token1Balance;
                             setToken1Balance(token2Balance);
