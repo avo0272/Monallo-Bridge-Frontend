@@ -89,7 +89,7 @@ const BurnProgressBar: React.FC<BurnProgressBarProps> = ({ steps, currentStep, s
                                 <p className={`font-medium ${step.status === 'active' ? 'text-blue-600' : ''}`}>{step.title}</p>
                                 {step.txHash && (step.key === 'burnCompleted' || step.key === 'mintCompleted') && (
                                     <p className="text-xs text-gray-500 font-mono mt-1">
-                                        txhash: <a 
+                                        txhash:<a 
                                             href={getExplorerUrl(
                                                 step.key === 'burnCompleted' ? sourceNetwork || '' : targetNetwork || '', 
                                                 step.txHash, 

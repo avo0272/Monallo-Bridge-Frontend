@@ -67,7 +67,7 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
     "PlatON-Mainnet": [
       { symbol: "LAT", network: "PlatON-Mainnet", address: "" },
       { symbol: "USDC", network: "PlatON-Mainnet", address: "0xdA396A3C7FC762643f658B47228CD51De6cE936d" },
-      { symbol: "maoUSDC", network: "PlatON-Mainnet", address: "0x2E715D00Cd58a048077640Ca1d3aB5CdaB181f0c" },
+      { symbol: "maoUSDC", network: "PlatON-Mainnet", address: "0x8967CEc2393082878d54A9906Cc1d7163292fB6C" },
       { symbol: "maoETH", network: "PlatON-Mainnet", address: "0xE9B5Ee5E5cE9DcDc0E5cE9DcDc0E5cE9DcDc0E5cE9D" },
       { symbol: "maoEURC", network: "PlatON-Mainnet", address: "0x644B4d44EE3b1afD5370b6E541d55Edf5E6F2120"}
     ],

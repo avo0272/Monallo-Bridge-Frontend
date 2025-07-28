@@ -35,7 +35,7 @@ export default function Header() {
       if (typeof window.ethereum !== "undefined") {
         // 请求用户授权连接钱包
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        const address = accounts[0];
+        const address = Web3.utils.toChecksumAddress(accounts[0]);
         setWalletAddress(address);
         setIsConnected(true);
         setShowWalletDropdown(false);
@@ -63,7 +63,7 @@ export default function Header() {
       if (typeof window.okxwallet !== "undefined") {
         // 请求用户授权连接钱包
         const accounts = await window.okxwallet.request({ method: "eth_requestAccounts" });
-        const address = accounts[0];
+        const address = Web3.utils.toChecksumAddress(accounts[0]);
         setWalletAddress(address);
         setIsConnected(true);
         setShowWalletDropdown(false);
@@ -123,10 +123,11 @@ export default function Header() {
           localStorage.removeItem("walletAddress");
         } else {
           // 账户已更改
-          setWalletAddress(accounts[0]);
+          const checksumAddress = Web3.utils.toChecksumAddress(accounts[0]);
+          setWalletAddress(checksumAddress);
           setIsConnected(true);
           // 更新localStorage中的钱包地址
-          localStorage.setItem("walletAddress", accounts[0]);
+          localStorage.setItem("walletAddress", checksumAddress);
         }
         
         // 触发自定义事件，通知其他组件钱包状态已变化

@@ -41,6 +41,7 @@ const getStatusDisplay = (status: string) => {
   const statusMap: { [key: string]: { text: string; color: string } } = {
     pending: { text: "pending", color: "text-yellow-600 bg-yellow-100" },
     minted: { text: "minted", color: "text-green-600 bg-green-100" },
+    success: { text: "success", color: "text-green-600 bg-green-100" },
     failed: { text: "failed", color: "text-red-600 bg-red-100" },
   };
   return statusMap[status] || { text: status, color: "text-gray-600 bg-gray-100" };
@@ -78,7 +79,7 @@ export default function HistoryTable() {
       
       // This needs to be replaced with the actual backend API address
       const response = await axios.get("https://uatbridge.monallo.ai/lockinfo/api/allCrossRecords");
-      // const response = await axios.get("http://192.168.31.176:5000/api/allCrossRecords");
+      // const response = await axios.get("http://192.168.31.178:5000/api/allCrossRecords");
       console.log(response.data);
       
       // Process data, map API returned fields to component fields

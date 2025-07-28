@@ -232,6 +232,24 @@ function reducer(state: State, action: Action): State {
                         } 
                     });
                     dispatchAction({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintCompleted' });
+                    
+                    // 销毁成功后检查余额
+                    console.log('UNLOCK_SUCCESS: 触发余额检查');
+                    setTimeout(() => {
+                        if (typeof window !== 'undefined') {
+                            const event = new CustomEvent('refreshBalance');
+                            document.dispatchEvent(event);
+                        }
+                    }, 1000);
+                    
+                    // 锁币成功后检查余额
+                    console.log('MINT_SUCCESS: 触发余额检查');
+                    setTimeout(() => {
+                        if (typeof window !== 'undefined') {
+                            const event = new CustomEvent('refreshBalance');
+                            document.dispatchEvent(event);
+                        }
+                    }, 1000);
                 } else if (data.type === 'MINT_FAILURE') {
                     newMintStatus = {
                         success: false,
@@ -708,10 +726,8 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                 address: state.walletAddress,
             });
             
-            // 等待交易确认
-            setTimeout(async () => {
-                await checkAuthorization();
-            }, 3000);
+            // 授权交易已提交，等待用户关闭弹窗时再检查授权状态
+            // 移除自动检查，避免与弹窗关闭时的检查重复
             
             // 显示授权成功弹窗
             dispatch({ 
@@ -749,6 +765,16 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             console.error('Failed to send authorization data to backend:', error);
             // Don't throw error because the authorization itself was successful
         }
+    };
+
+    // 处理弹窗关闭事件
+    const handleMintStatusClose = async () => {
+        // 如果是授权成功弹窗，关闭时执行授权检查
+        if (state.mintStatus && state.mintStatus.message.includes('Authorization')) {
+            console.log('Authorization popup closed, performing authorization check...');
+            await checkAuthorization();
+        }
+        dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false });
     };
     
     // 在用户交互时触发WebSocket重连
@@ -830,7 +856,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
         try {
             // Get current connected wallet address
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const currentAddress = accounts[0];
+            const currentAddress = web3Service.web3?.utils.toChecksumAddress(accounts[0]) || accounts[0];
             
             // Determine receiver address, use current wallet address if not provided
             const receiver = receiverAddress || currentAddress;
@@ -1616,7 +1642,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
             {state.showMintStatus && state.mintStatus && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     {/* Blur Background */}
-                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={() => dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false })}></div>
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={handleMintStatusClose}></div>
                     {/* Modal Content */}
                     <div className={`max-w-2xl w-full mx-4 p-6 rounded-xl shadow-xl z-50 ${state.mintStatus.success ? 'bg-white border-l-4 border-green-500' : 'bg-white border-l-4 border-yellow-500'}`}>
                         <div className="flex items-start">
@@ -1649,7 +1675,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
 
                             </div>
                             <button 
-                                onClick={() => dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false })} 
+                                onClick={handleMintStatusClose} 
                                 className="ml-2 text-gray-400 hover:text-gray-600 text-xl font-medium"
                             >
                                 ×
@@ -1657,7 +1683,7 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                         </div>
                         <div className="mt-4 flex justify-end">
                             <button
-                                onClick={() => dispatch({ type: 'SET_SHOW_MINT_STATUS', payload: false })}
+                                onClick={handleMintStatusClose}
                                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
                             >
                                 Close

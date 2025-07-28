@@ -12,6 +12,7 @@ import ReceiverAddress from "./receiverAddress";
 import { useState, useEffect } from "react"
 import web3Service from "../services/web3Service"
 import priceService from "../services/priceService"
+import Web3 from 'web3';
 
 
 export default function Body() {
@@ -107,8 +108,9 @@ export default function Body() {
                     if (accounts.length > 0) {
                         // 检查当前连接的钱包地址与localStorage中的是否一致
                         const savedAddress = localStorage.getItem("walletAddress");
-                        if (savedAddress && savedAddress === accounts[0]) {
-                            setWalletAddress(accounts[0]);
+                        const checksumAccount = Web3.utils.toChecksumAddress(accounts[0]);
+                        if (savedAddress && savedAddress === checksumAccount) {
+                            setWalletAddress(checksumAccount);
                         } else if (!savedAddress) {
                             // 如果localStorage中没有钱包地址，则不设置钱包地址
                             setWalletAddress('');
@@ -133,8 +135,9 @@ export default function Body() {
                 const savedAddress = localStorage.getItem("walletAddress");
                 if (accounts.length > 0) {
                     // 检查新账户与localStorage中的是否一致
-                    if (savedAddress && savedAddress === accounts[0]) {
-                        setWalletAddress(accounts[0]);
+                    const checksumAccount = Web3.utils.toChecksumAddress(accounts[0]);
+                    if (savedAddress && savedAddress === checksumAccount) {
+                        setWalletAddress(checksumAccount);
                     } else if (!savedAddress) {
                         // 如果localStorage中没有钱包地址，则不设置钱包地址
                         setWalletAddress('');
@@ -161,8 +164,11 @@ export default function Body() {
                     if (window.ethereum) {
                         window.ethereum.request({ method: 'eth_accounts' })
                             .then(accounts => {
-                                if (accounts.length > 0 && accounts[0] === savedAddress) {
-                                    setWalletAddress(savedAddress);
+                                if (accounts.length > 0) {
+                                    const checksumAccount = Web3.utils.toChecksumAddress(accounts[0]);
+                                    if (checksumAccount === savedAddress) {
+                                        setWalletAddress(savedAddress);
+                                    }
                                 } else {
                                     // 如果钱包未连接或地址不一致，清除localStorage中的地址
                                     localStorage.removeItem("walletAddress");
@@ -192,11 +198,21 @@ export default function Body() {
                 }
             };
             
+            // 处理余额刷新事件
+            const handleRefreshBalance = () => {
+                console.log('收到余额刷新事件，开始更新余额');
+                const savedAddress = localStorage.getItem("walletAddress");
+                if (savedAddress && walletAddress && savedAddress === walletAddress && selectedToken1) {
+                    fetchTokenBalance(selectedToken1, true);
+                }
+            };
+            
             // 添加事件监听器
             if (window.ethereum) {
                 window.ethereum.on('accountsChanged', handleAccountsChanged);
             }
             document.addEventListener('walletChanged', handleWalletChanged);
+            document.addEventListener('refreshBalance', handleRefreshBalance);
             
             // 清理函数
             return () => {
@@ -204,6 +220,7 @@ export default function Body() {
                     window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
                 }
                 document.removeEventListener('walletChanged', handleWalletChanged);
+                document.removeEventListener('refreshBalance', handleRefreshBalance);
             };
         }
     }, []);
