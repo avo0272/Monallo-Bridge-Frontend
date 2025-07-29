@@ -82,13 +82,53 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
   // 检查当前选择的网络是否与fromNetwork相同
   const isNetworkDisabled = fromNetwork && (activeNetwork === fromNetwork);
   
-  // 过滤代币：匹配 symbol 或 address，并且排除来自与fromNetwork相同网络的代币
+  // 过滤代币：匹配 symbol 或 address，并且根据fromToken限制可选代币类型
   const filteredTokens = isNetworkDisabled 
     ? [] // 如果网络被禁用，返回空数组
     : networkInfo[activeNetwork].filter(token => {
-        // 匹配搜索词
-        return token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        // 首先匹配搜索词
+        const matchesSearch = token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
           token.address.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (!matchesSearch) return false;
+        
+        // 如果没有选择fromToken，显示所有代币
+        if (!fromToken) return true;
+        
+        // 定义原生代币到mao代币的映射
+        const nativeToMaoMapping: Record<string, string> = {
+          "ETH": "maoETH",
+          "USDC": "maoUSDC", 
+          "EURC": "maoEURC",
+          "IMUA": "maoIMUA",
+          "ZETA": "maoZETA",
+          "LAT": "maoLAT"
+        };
+        
+        // 定义mao代币到原生代币的映射
+        const maoToNativeMapping: Record<string, string> = {
+          "maoETH": "ETH",
+          "maoUSDC": "USDC",
+          "maoEURC": "EURC", 
+          "maoIMUA": "IMUA",
+          "maoZETA": "ZETA",
+          "maoLAT": "LAT"
+        };
+        
+        const fromSymbol = fromToken.symbol;
+        
+        // 如果From是原生代币，To只能选择对应的mao代币
+        if (nativeToMaoMapping[fromSymbol]) {
+          return token.symbol === nativeToMaoMapping[fromSymbol];
+        }
+        
+        // 如果From是mao代币，To只能选择对应的原生代币
+        if (maoToNativeMapping[fromSymbol]) {
+          return token.symbol === maoToNativeMapping[fromSymbol];
+        }
+        
+        // 如果fromToken不在映射中，显示所有代币
+        return true;
       });
 
   const handleTokenClick = (token: Token) => {
@@ -231,6 +271,38 @@ export default function Option2Select({ onTokenSelect, showSelect, fromNetwork, 
             className="w-full p-2 rounded-md bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-gray-400 py-2">Tokens on {activeNetwork}</p>
+          {fromToken && (
+            <div className="text-blue-400 text-sm py-1 bg-blue-900/20 rounded px-2 mb-2">
+              {(() => {
+                const fromSymbol = fromToken.symbol;
+                const nativeToMaoMapping: Record<string, string> = {
+                  "ETH": "maoETH",
+                  "USDC": "maoUSDC", 
+                  "EURC": "maoEURC",
+                  "IMUA": "maoIMUA",
+                  "ZETA": "maoZETA",
+                  "LAT": "maoLAT"
+                };
+                
+                const maoToNativeMapping: Record<string, string> = {
+                  "maoETH": "ETH",
+                  "maoUSDC": "USDC",
+                  "maoEURC": "EURC", 
+                  "maoIMUA": "IMUA",
+                  "maoZETA": "ZETA",
+                  "maoLAT": "LAT"
+                };
+                
+                if (nativeToMaoMapping[fromSymbol]) {
+                  return ` Since you selected ${fromSymbol} from ${fromToken.network}, you can only choose ${nativeToMaoMapping[fromSymbol]} on other networks.`;
+                } else if (maoToNativeMapping[fromSymbol]) {
+                  return ` Since you selected ${fromSymbol} from ${fromToken.network}, you can only choose ${maoToNativeMapping[fromSymbol]} on other networks.`;
+                }
+                return null;
+              })()
+              }
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2 flex-1 overflow-y-auto text-white max-h-44">
           {/* 代币列表 */}

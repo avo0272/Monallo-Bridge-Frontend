@@ -89,8 +89,9 @@ export default function Option1Select({ onTokenSelect, showSelect, toNetwork, se
   }, [toNetwork]);
 
   // 过滤代币：匹配 symbol 或 address
+  // From可以自由选择任何代币，不受To的限制
   const filteredTokens = networkInfo[activeNetwork].filter(token => {
-    // 匹配搜索词
+    // 只匹配搜索词，不做其他限制
     return token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
       token.address.toLowerCase().includes(searchTerm.toLowerCase());
   });

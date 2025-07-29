@@ -216,29 +216,47 @@ class Web3Service {
       throw new Error(`不支持的网络: ${networkName}`);
     }
 
+    console.log(`[SWITCH NETWORK] 尝试切换到网络: ${networkName}, 链ID: ${networkConfig.chainId}`);
+
     try {
+      // 获取当前网络
+      const currentChainId = await this._web3.eth.getChainId();
+      const currentHexChainId = '0x' + currentChainId.toString(16);
+      console.log(`[SWITCH NETWORK] 当前链ID: ${currentHexChainId}`);
+      
+      // 如果已经在目标网络，直接返回
+      if (currentHexChainId.toLowerCase() === networkConfig.chainId.toLowerCase()) {
+        console.log(`[SWITCH NETWORK] 已经在目标网络 ${networkName}，无需切换`);
+        this.currentNetwork = networkName;
+        return true;
+      }
+      
       // 尝试切换到指定网络
+      console.log(`[SWITCH NETWORK] 发送切换网络请求`);
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: networkConfig.chainId }],
       });
 
       this.currentNetwork = networkName;
-      // console.log(`成功切换到网络: ${networkName}`);
+      console.log(`[SWITCH NETWORK] 成功切换到网络: ${networkName}`);
       return true;
     } catch (error: any) {
+      console.log(`[SWITCH NETWORK] 切换网络出错，错误代码: ${error.code}`);
       // 如果网络不存在，尝试添加网络
       if (error.code === 4902) {
         try {
+          console.log(`[SWITCH NETWORK] 网络不存在，尝试添加网络: ${networkName}`);
           await this.addNetwork(networkConfig);
           this.currentNetwork = networkName;
+          console.log(`[SWITCH NETWORK] 成功添加并切换到网络: ${networkName}`);
           return true;
         } catch (addError) {
-          console.error('添加网络失败:', addError);
+          console.error('[SWITCH NETWORK] 添加网络失败:', addError);
           throw addError;
         }
       }
-      console.error('切换网络失败:', error);
+      console.error('[SWITCH NETWORK] 切换网络失败:', error);
       throw error;
     }
   }
@@ -279,21 +297,31 @@ class Web3Service {
 
     // 如果没有代币地址，返回原生代币余额
     if (!tokenAddress) {
+      console.log(`[GET TOKEN BALANCE] 获取原生代币余额 - 钱包地址: ${walletAddress}`);
       return this.getNativeBalance(walletAddress);
     }
 
     try {
+      // 获取当前网络信息
+      const currentChainId = await this._web3.eth.getChainId();
+      const currentNetwork = await this.getCurrentNetwork();
+      console.log(`[GET TOKEN BALANCE] 当前网络: ${currentNetwork}, 链ID: ${currentChainId}`);
+      console.log(`[GET TOKEN BALANCE] 查询代币余额 - 代币地址: ${tokenAddress}, 钱包地址: ${walletAddress}`);
+      
       // 创建合约实例
       const tokenContract = new this._web3.eth.Contract(ERC20_ABI, tokenAddress);
 
       // 获取代币精度
       const decimals = await tokenContract.methods.decimals().call();
+      console.log(`[GET TOKEN BALANCE] 代币精度: ${decimals}`);
 
       // 获取原始余额
       const balance = await tokenContract.methods.balanceOf(walletAddress).call();
+      console.log(`[GET TOKEN BALANCE] 原始余额: ${balance}`);
 
       // 根据精度转换余额
       const formattedBalance = Number(balance) / Math.pow(10, Number(decimals));
+      console.log(`[GET TOKEN BALANCE] 格式化余额: ${formattedBalance}`);
 
       return formattedBalance.toFixed(6);
     } catch (error) {

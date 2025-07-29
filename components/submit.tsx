@@ -1338,6 +1338,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     });
                     dispatch({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintPending' });
                 }, 1000);
+                
+                // Trigger balance refresh after burn success
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('refreshBalance'));
+                }, 1000);
             }
             
             // Extract fee information, if available
@@ -1407,6 +1412,11 @@ export default function Submit({ onConnectWallet, receiverAddress, amount, selec
                     targetToTxHash: txHash
                 }
             });
+            
+            // Trigger balance refresh after lock success
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('refreshBalance'));
+            }, 1000);
             
             // Send data to backend
             await sendDataToBackend(transactionData);
