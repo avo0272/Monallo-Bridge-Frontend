@@ -53,6 +53,7 @@ type MintMessage = {
     type: string;
     data?: {
         targetToTxHash?: string;
+        unlockTxHash?: string;
         [key: string]: any;
     };
     success?: boolean;
@@ -299,7 +300,7 @@ function reducer(state: State, action: Action): State {
                     newMintStatus = {
                         success: true,
                         message: 'Unlock successful!',
-                        targetToTxHash: data.data?.targetToTxHash
+                        targetToTxHash: data.data?.unlockTxHash
                     };
                     
                     // Update progress bar status - unlock successful
@@ -314,7 +315,7 @@ function reducer(state: State, action: Action): State {
                         type: 'UPDATE_BURN_STEP', 
                         payload: { 
                             step: 'mintPending', 
-                            data: { status: 'completed', txHash: data.data?.targetToTxHash, title: 'Cross-chain communication protocol has been processed' } 
+                            data: { status: 'completed', txHash: data.data?.unlockTxHash, title: 'Cross-chain communication protocol has been processed' } 
                         } 
                     });
                     
@@ -323,7 +324,7 @@ function reducer(state: State, action: Action): State {
                         type: 'UPDATE_BURN_STEP', 
                         payload: { 
                             step: 'mintCompleted', 
-                            data: { status: 'completed', txHash: data.data?.targetToTxHash, title: `[${state.targetToken.network}] ${state.targetToken.symbol} unlock successfully` } 
+                            data: { status: 'completed', txHash: data.data?.unlockTxHash, title: `[${state.targetToken.network}] ${state.targetToken.symbol} unlock successfully` } 
                         } 
                     });
                     dispatchAction({ type: 'SET_CURRENT_BURN_STEP', payload: 'mintCompleted' });
